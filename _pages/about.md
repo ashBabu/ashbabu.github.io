@@ -2,23 +2,21 @@
 layout: about
 title: about
 permalink: /
-subtitle: <a href='#'>Affiliations</a>. Address. Contacts. Moto. Etc.
+subtitle: <a href='https://sagarobotics.com/'>Saga Robotics Ltd.</a>. Think Tank, Ruston Way, Lincoln, LN6 7FL, United Kingdom.
 
 profile:
   align: right
   image: prof_pic.jpg
-  address: >
-    <p>555 your office number</p>
-    <p>123 your address street</p>
-    <p>Your City, State 12345</p>
+  # address: >
+  #    <p>Think Tank</p>
+  #    <p>Ruston Way</p>
+  #    <p>Lincoln, LN6 7FL</p>
 
-news: true  # includes a list of news items
+news: false  # includes a list of news items
 selected_papers: true # includes a list of papers marked as "selected={true}"
-social: true  # includes social icons at the bottom of the page
+social: false  # includes social icons at the bottom of the page
 ---
 
-Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
-
-Put your address / P.O. box / other info right below your picture. You can also disable any these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
-
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](http://fortawesome.github.io/Font-Awesome/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them.
+<div style="text-align: justify">
+From March 2021, I work for <a href="https://sagarobotics.com/"> Saga Robotics Ltd. </a> as a Robotics Software Engineer. Here I do robot manipulation for autonomous strawberry picking. I have developed decision strategies which provides the intelligence required for the robot to choose a ripe berry from a list. Apart from robot manipulation, I have worked in the areas of deep learning for object detection, robot learning from human demonstrations, reinforcement learning for space debris removal, control systems and parallel manipulators
+</div>

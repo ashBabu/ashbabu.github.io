@@ -3,27 +3,6 @@
 
 @string{aps = {American Physical Society,}}
 
-@book{einstein1956investigations,
-  bibtex_show={true},
-  title={Investigations on the Theory of the Brownian Movement},
-  author={Einstein, Albert},
-  year={1956},
-  publisher={Courier Corporation,}
-}
-
-@article{einstein1950meaning,
-  abbr={AJP},
-  bibtex_show={true},
-  title={The meaning of relativity},
-  author={Einstein, Albert and Taub, AH},
-  journal={American Journal of Physics,},
-  volume={18},
-  number={6},
-  pages={403--404},
-  year={1950},
-  publisher={American Association of Physics Teachers,}
-}
-
 @article{PhysRev.47.777,
   abbr={PhysRev},
   title={Can Quantum-Mechanical Description of Physical Reality Be Considered Complete?},
@@ -41,32 +20,83 @@
   url={http://link.aps.org/doi/10.1103/PhysRev.47.777},
   html={https://journals.aps.org/pr/abstract/10.1103/PhysRev.47.777},
   pdf={example_pdf.pdf},
+}
+
+@ARTICLE{10.3389/frobt.2021.638849,
+abbr={Frontiers},
+author={Ashith, B. and Hao, Zhou and Montanaro, Umberto and Dixit, Shilp and Rathinam, Arunkumar and Gao, Yang and Neumann, Gerhard and Fallah, Saber},
+title={Autonomous Robots for Space: Trajectory Learning and Adaptation Using Imitation}, 
+journal={Frontiers in Robotics and AI}, 
+volume={8},
+year={2021},  
+url={https://www.frontiersin.org/article/10.3389/frobt.2021.638849},
+html={https://www.frontiersin.org/articles/10.3389/frobt.2021.638849/full},
+doi={10.3389/frobt.2021.638849},      
+issn={2296-9144},    
+abstract={This paper adds on to the on-going efforts to provide more autonomy to space robots and introduces the concept of programming by demonstration or imitation learning for trajectory planning of manipulators on free-floating spacecraft. A redundant 7-DoF robotic arm is mounted on small spacecraft dedicated for debris removal, on-orbit servicing and assembly, autonomous and rendezvous docking. The motion of robot (or manipulator) arm induces reaction forces on the spacecraft and hence its attitude changes prompting the Attitude Determination and Control System (ADCS) to take large corrective action. The method introduced here is capable of finding the trajectory that minimizes the attitudinal changes thereby reducing the load on ADCS. One of the critical elements in spacecraft trajectory planning and control is the power consumption. The approach introduced in this work carry out trajectory learning offline by collecting data from demonstrations and encoding it as a probabilistic distribution of trajectories. The learned trajectory distribution can be used for planning in previously unseen situations by conditioning the probabilistic distribution. Hence almost no power is required for computations after deployment. Sampling from a conditioned distribution provides several possible trajectories from the same start to goal state. To determine the trajectory that minimizes attitudinal changes, a cost term is defined and the trajectory which minimizes this cost is considered the optimal one.},
+pdf={papers/frontiers.pdf},
+selected={true}
+}
+
+@INPROCEEDINGS{8967980,
+  abbr={IROS},
+  author={Ashith, B. and Lightbody, Peter and Das, Gautham and Liu, Pengcheng and Gomez-Gonzalez, Sebastian and Neumann, Gerhard},
+  booktitle={2019 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)}, 
+  title={Improving Local Trajectory Optimisation using Probabilistic Movement Primitives}, 
+  year={2019},
+  volume={},
+  number={},
+  html={https://ieeexplore.ieee.org/document/8967980},
+  abstract={Local trajectory optimisation techniques are a powerful tool for motion planning. However, they often get stuck in local optima depending on the quality of the initial solution and consequently, often do not find a valid (i.e. collision free) trajectory. Moreover, they often require fine tuning of a cost function to obtain the desired motions. In this paper, we address both problems by combining local trajectory optimisation with learning from demonstrations. The human expert demonstrates how to reach different target end-effector locations in different ways. From these demonstrations, we estimate a trajectory distribution, represented by a Probabilistic Movement Primitive (ProMP). For a new target location, we sample different trajectories from the ProMP and use these trajectories as initial solutions for the local optimisation. As the ProMP generates versatile initial solutions for the optimisation, the chance of finding poor local minima is significantly reduced. Moreover, the learned trajectory distribution is used to specify the smoothness costs for the optimisation, resulting in solutions of similar shape as the demonstrations. We demonstrate the effectiveness of our approach in several complex obstacle avoidance scenarios.},
+  pages={2666-2671},
+  doi={10.1109/IROS40897.2019.8967980},
+  pdf={papers/IROS.pdf},
   selected={true}
+  }
+
+@ARTICLE{10.3389/frobt.2021.639327,
+abbr={Frontiers},
+AUTHOR={Hao, Zhou and Shyam, R. B. Ashith and Rathinam, Arunkumar and Gao, Yang},     
+TITLE={Intelligent Spacecraft Visual GNC Architecture With the State-Of-the-Art AI Components for On-Orbit Manipulation},       
+JOURNAL={Frontiers in Robotics and AI},       
+VOLUME={8},       
+YEAR={2021},         
+URL={https://www.frontiersin.org/article/10.3389/frobt.2021.639327},        
+DOI={10.3389/frobt.2021.639327},       
+ISSN={2296-9144},      
+ABSTRACT={Conventional spacecraft Guidance, Navigation, and Control (GNC) architectures have been designed to receive and execute commands from ground control with minimal automation and autonomy onboard spacecraft. In contrast, Artificial Intelligence (AI)-based systems can allow real-time decision-making by considering system information that is difficult to model and incorporate in the conventional decision-making process involving ground control or human operators. With growing interests in on-orbit services with manipulation, the conventional GNC faces numerous challenges in adapting to a wide range of possible scenarios, such as removing unknown debris, potentially addressed using emerging AI-enabled robotic technologies. However, a complete paradigm shift may need years' efforts. As an intermediate solution, we introduce a novel visual GNC system with two state-of-the-art AI modules to replace the corresponding functions in the conventional GNC system for on-orbit manipulation. The AI components are as follows: (i) A Deep Learning (DL)-based pose estimation algorithm that can estimate a target's pose from two-dimensional images using a pre-trained neural network without requiring any prior information on the dynamics or state of the target. (ii) A technique for modeling and controlling space robot manipulator trajectories using probabilistic modeling and reproduction to previously unseen situations to avoid complex trajectory optimizations on board. This also minimizes the attitude disturbances of spacecraft induced on it due to the motion of the robot arm. This architecture uses a centralized camera network as the main sensor, and the trajectory learning module of the 7 degrees of freedom robotic arm is integrated into the GNC system. The intelligent visual GNC system is demonstrated by simulation of a conceptual mission—AISAT. The mission is a micro-satellite to carry out on-orbit manipulation around a non-cooperative CubeSat. The simulation shows how the GNC system works in discrete-time simulation with the control and trajectory planning are generated in Matlab/Simulink. The physics rendering engine, Eevee, renders the whole simulation to provide a graphic realism for the DL pose estimation. In the end, the testbeds developed to evaluate and demonstrate the GNC system are also introduced. The novel intelligent GNC system can be a stepping stone toward future fully autonomous orbital robot systems.},
+html={https://www.frontiersin.org/articles/10.3389/frobt.2021.639327/full},
 }
 
-@article{einstein1905molekularkinetischen,
-  title={{\"U}ber die von der molekularkinetischen Theorie der W{\"a}rme geforderte Bewegung von in ruhenden Fl{\"u}ssigkeiten suspendierten Teilchen},
-  author={Einstein, A.},
-  journal={Annalen der physik,},
-  volume={322},
-  number={8},
-  pages={549--560},
-  year={1905},
-  publisher={Wiley Online Library}
+@article{shyam2018path,
+  abbr={MMT},
+  title={Path planning of a 3-UPU wrist manipulator for sun tracking in central receiver tower systems},
+  author={Ashith, B. and Ghosal, A},
+  journal={Mechanism and Machine Theory},
+  volume={119},
+  pages={130--141},
+  year={2018},
+  publisher={Elsevier},
+  html={https://www.sciencedirect.com/science/article/abs/pii/S0094114X1730890X},
+  abstract={Heliostats capable of tracking the sun as it moves across the sky and focusing the incident solar energy on to a central receiver tower requires a two degree-of-freedom (DOF) mechanism which can orient the mirror in the desired manner. Existing two-DOF mechanism, such as the Azimuth-Elevation (Az-EL) and the Target-Aligned (T-A), have two actuators in series. It is known that during certain times of the day, the T-A configuration has less spillage losses and astigmatic aberration while at other times the Az-El configuration is better. In this paper, we propose a three-DOF parallel manipulator which can be used as a heliostat. The proposed 3-UPU, three-DOF parallel manipulator, has a fixed point about which the mirror can rotate about three axes. Since only two DOF are required to track the sun, the 3-UPU is a redundant system. We propose a strategy to use this redundancy and electronically reconfigure the 3-UPU to achieve the Az-El and T-A configurations thus achieving the advantages of both. As the motion of the sun is precisely known for any geographical location on earth, time and day of the year, numerical simulations done a priori provide the conditions for switching.},
+  pdf={papers/MMT.pdf}
 }
 
-@article{einstein1905movement,
-  abbr={Ann. Phys.},
-  title={Un the movement of small particles suspended in statiunary liquids required by the molecular-kinetic theory 0f heat},
-  author={Einstein, A.},
-  journal={Ann. Phys.,},
-  volume={17},
-  pages={549--560},
-  year={1905}
+@article{shyam2017heliostat,
+  abbr={Solar Energy},
+  title={A heliostat based on a three degree-of-freedom parallel manipulator},
+  author={Ashith, B. and Acharya, Mohit and Ghosal, A},
+  journal={Solar Energy},
+  volume={157},
+  pages={672--686},
+  year={2017},
+  publisher={Elsevier},
+  html={https://www.sciencedirect.com/science/article/abs/pii/S0038092X17307557},
+  abstract={In this paper, we propose a three-degree-of-freedom spatial parallel manipulator to track the sun in central receiver tower based concentrated solar power systems. The proposed parallel manipulator consists of three ‘legs’ each containing a passive rotary(R) joint, an actuated sliding or prismatic (P) joint and a passive spherical (S) joint and is known in literature as the 3-RPS manipulator. In contrast to existing serial mechanisms with two degrees-of-freedom, firstly it is shown that the extra actuator and enhanced mobility helps in reducing spillage losses and astigmatic aberration. Secondly, due to the three points of support, the beam pointing errors are less for wind and gravity loading or, alternately, the weight of the supporting structure to maintain desired deflections of the mirrors are significantly lower. Finally, the linear actuators used in the parallel manipulator do not require the use of large, accurate and expensive speed reducers. In this paper, we model the 3-RPS manipulator and derive the kinematics equations which give the motion of the linear actuators required to track the sun and reflect the incident solar energy at a stationary target at any time of the day, at any day of the year and at any location on the surface of the Earth. Finite element analysis is used to determine an optimized design which can reduce the weight of the supporting structure by as much as 60% as compared to the existing tracking mechanisms. A proportional, integral plus derivative (PID) control strategy using a low-cost processor is devised and a detailed simulation study is carried out to show that the proposed parallel manipulator performs better compared to the current tracking algorithms. Finally, a prototype of the parallel manipulator is manufactured and it is demonstrated that it is capable of performing autonomous sun tracking with the above mentioned advantages.},
+  pdf={papers/SolarEnergy.pdf}
 }
 
-@article{einstein1905electrodynamics,
-  title={On the electrodynamics of moving bodies},
-  author={Einstein, A.},
-  year={1905}
-}
+
+
+
+

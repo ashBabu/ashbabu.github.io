@@ -12,9 +12,12 @@ group :jekyll_plugins do
     gem 'jekyll-sitemap'
     gem 'jekyll-target-blank'
     gem 'jekyll-twitter-plugin'
+    #gem 'jekyll-watch'
     gem 'jemoji'
     gem 'unicode_utils'
     gem 'webrick'
     gem 'htmlcompressor'
     gem 'htmlbeautifier'
+    gem 'jekyll-include-cache'
+    #gem 'github-pages'
 end
