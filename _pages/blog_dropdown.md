@@ -5,8 +5,8 @@ permalink: /blog/
 nav: true
 dropdown: true
 children: 
-    # - title: Robotics
-    #   permalink: /blog/category/robotics/
+    - title: Robotics
+      permalink: /blog/category/robotics/
     - title: divider
     - title: Programming
       permalink: /blog/category/programming/
