@@ -16,6 +16,8 @@ children:
     - title: divider
     - title: Reinforcement Learning
       permalink: /blog/category/reinforcement-learning/
+    - title: Machine Learning
+      permalink: /blog/category/machine-learning/
 
 
 ---
