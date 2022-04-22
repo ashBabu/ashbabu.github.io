@@ -84,7 +84,7 @@ The aim of the regression analysis is to minimize this error and find out suitab
 The sum of the square of the errors is also called Loss function, `L`
 
 \begin{align}
-	L = e^Te &= (\hat{X}\hat{w} - Y)^T (\hat{X}\hat{w} - Y) 
+	L = e^Te &= (Xw - Y)^T (Xw - Y) 
 	\label{eqn:lossfun}
 \end{align}
 
@@ -98,14 +98,14 @@ To find the weights, we need to set the gradient of `L` with respect to `w` to b
 Setting the gradient of eq. \ref{eqn:lossfun} to zero, we get
 
 \begin{align}
-	\frac{\partial L}{\partial \hat{w}} &= \frac{\partial L}{\partial e}  \frac{\partial e}{\partial \hat{w}} \nonumber \newline
+	\frac{\partial L}{\partial w} &= \frac{\partial L}{\partial e}  \frac{\partial e}{\partial w} \nonumber \newline
 	&= 2eX\nonumber\newline
-	&= 2(X\hat{w} - Y)^TX = 0 \label{eqn:derivative}	
+	&= 2(Xw - Y)^TX = 0 \label{eqn:derivative}	
 \end{align}
 Taking the transpose of eq. \ref{eqn:derivative}, we get
 
 \begin{align}
-	X^T(X\hat{w} - Y) = 0 \implies \hat{w} = (X^TX)^{-1}X^TY
+	X^T(Xw - Y) = 0 \implies w = (X^TX)^{-1}X^TY
 	\label{eqn:weightvector}
 \end{align}
 where the quantity $$(X^TX)^{-1}X^T$$ is called the `left pseudo-inverse`

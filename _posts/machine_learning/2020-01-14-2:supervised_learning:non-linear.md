@@ -54,7 +54,7 @@ The matrix equation becomes
 
 The equation to find the parameters would remain the same as in Part1 (reproduced in eq. \ref{parameter}), the change being in the feature matrix and also an added parameter (`w_2`).
 \begin{align}
-	\hat{w} = (X^TX)^{-1}X^TY
+	w = (X^TX)^{-1}X^TY
 	\label{parameter}
 \end{align}
 

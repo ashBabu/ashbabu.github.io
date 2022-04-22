@@ -10,7 +10,7 @@ enable_math: true
 <!-- <div style="text-align: justify"> <a href="https://www.ros.org/"> ROS </a> --> <!-- </div> -->
 
 <!-- \section{Probabilistic Regression} -->
-The model is $$P(Y | X)$$  which means probability of output ($$Y$$) given input ($$X$$). This is assumed to be a normal distribution with mean $$w$$ and variance $$\sigma^2$$ which are unknown. \\
+The mathematical model for Probabilistic Regression is $$P(Y | X)$$  which means probability of output ($$Y$$) given input ($$X$$). This is assumed to be a normal distribution with mean $$w$$ and variance $$\sigma^2$$ which are unknown. \\
 **Assumption:** Independent and identically distributed (i.i.d). For i.i.d's, the total probability is the product of individual probabilities
 \begin{align}
     P(Y|X) &= \prod p(y_i|x_i) = \mathcal{N}(Y|X^Tw, \sigma^2I)\, \nonumber \newline
@@ -20,6 +20,7 @@ The model is $$P(Y | X)$$  which means probability of output ($$Y$$) given input
 where $$\Sigma = \sigma^2I $$.   Eq. \ref{eqn:multivarGaussian} is the equation for Multivariate Gaussian Distribution
 
 #### Maximum Likelihood Estimation
+The loss function becomes
 \begin{align}
     L = P(Y|X) - \prod p(y_i|x_i) 
     \label{eqn:maxLikeli}
