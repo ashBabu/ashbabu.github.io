@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Matplotlib in C++ with CMake
-date: 2021-11-08 11:12:00-0400
+date: 2020-11-08 11:12:00-0400
 description: How to make a matplotlib-cpp work with CMake
 categories: Programming
 ---
