@@ -6,7 +6,7 @@ description: How to generate solve for forward kinematics
 categories: Robotics Programming
 ---
 
-We solved the symbolic [forward kinematics](/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/) and generated the following expression
+We have solved the symbolic [forward kinematics](/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/) and generated the following expressions in one of the previous articles
 \begin{align}
      x &= 0.2\cos(q1) + 0.2\cos(q1 - q2) + 0.25\cos(q1 - q2 + q3) + 0.1415 \nonumber \newline
      y &= 0.2\sin(q1) + 0.2\sin(q1 - q2) + 0.25\sin(q1 - q2 + q3)  \nonumber
@@ -15,7 +15,6 @@ We solved the symbolic [forward kinematics](/blog/2022/Generating_Symbolic_Expre
 To solve these equations, I am gonna discuss two methods, viz. the analytic way which is faster but very difficult to generate equations for robots with several joints and the more general optimization based approach.
 
 #### Analytic solution of IK
-From the forward kinematic equations, we could write
 Let $$ a1 = 0.2, a2 = 0.25, a3 = 0.1415 $$
 
 $$(x - a3)^2 + y^2 = 2a1^2 \cos q2 + 2a1a2 \cos q3 +2a1a2 \cos(q2 - q3) + 2a1^2 + a2^2$$
@@ -70,4 +69,4 @@ where $$FK$$ and $$Target$$ respectively are the forward kinematics and the co-o
      Min~ Z = (FK - Target)^2 + q1^2 + q2^2 + ....
 \end{align}
 
-The optimization procedure could be sped up by providing the [jacobian](/blog/2019/Jacobian/) (gradient function) and the implementation of one such is provided in [optim_ik](https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/optim_ik.py). The subject of optimization is very vast and the brief discussion provided here is probably not enough to understand the whole process but is beyond the scope of this article. Another use of optimization is [camera calibration](/blog/2018/Camera-Calibration/). It sounds very promising to find solutions using optimization but takes a bit of time and has the biggest problem of finding [local minima](https://en.wikipedia.org/wiki/Maxima_and_minima). The quality of the initial guess to start the optimization process decides where it's going to end up and requires thorough knowledge to set things up. [KDL], [Trac-ik] are examples of kinematics library which uses optimization to solve the inverse kinematics problem
+The optimization procedure could be sped up by providing the [jacobian](/blog/2019/Jacobian/) (gradient function) and the implementation of one such is provided in [optim_ik](https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/optim_ik.py). The subject of optimization is very vast and the brief discussion provided here is probably not enough to understand the whole process but is beyond the scope of this article. Another use of optimization is [camera calibration](/blog/2018/Camera-Calibration/). It sounds very promising to find solutions using optimization but takes a bit of time and has the biggest problem of finding [local minima](https://en.wikipedia.org/wiki/Maxima_and_minima). The quality of the initial guess to start the optimization process decides where it's going to end up and requires thorough knowledge to set things up. [KDL](http://wiki.ros.org/kdl), [Trac-ik](http://wiki.ros.org/trac_ik) are examples of kinematics library which use optimization to solve the inverse kinematics problem.

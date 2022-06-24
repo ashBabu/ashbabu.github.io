@@ -23,9 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES my_test_pkg
-#  CATKIN_DEPENDS moveit_core roscpp std_msgs
+  CATKIN_DEPENDS moveit_core roscpp std_msgs
 #  DEPENDS system_lib
 )
 
@@ -222,7 +222,7 @@ target_link_libraries(
 )
 ```
 
-The `package.xml` should have the `build_depend` and `exec_depend` tags for all those listed under the `find_package()`. For a deeper understanding, have a loot at [here](http://wiki.ros.org/catkin/package.xml). 
+The `package.xml` should have the `build_depend` and `exec_depend` tags for all those listed under the `find_package()`. For a deeper understanding, have a look at [here](http://wiki.ros.org/catkin/package.xml). 
 
-In no way, this article is a complete with respect to learning ROS CPP but I hope this would give a good enough start point. We will look at adding `gtest()` and `rostest()` in the next article.
+In no way, this article is a complete with respect to learning ROS CPP but I hope this would give a good enough start point. We will look at adding `gtest()` and `rostest()` in the next [article](/blog/2022/3-Developing_ROS_Package/).
 

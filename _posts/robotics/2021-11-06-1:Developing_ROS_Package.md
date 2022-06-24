@@ -41,4 +41,4 @@ catkin_ws
                       |_ my_test_pkg/
 
 ```
-We will organize and add our c++ header files in `include/my_test_package` and all c++ source files in `src`
+We will organize and add our c++ header files in `include/my_test_package` and all c++ source files in `src`. Go to [Part 2](/blog/2021/2-Developing_ROS_Package/) for more exciting stuffs.
