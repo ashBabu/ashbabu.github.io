@@ -18,5 +18,5 @@ social: false  # includes social icons at the bottom of the page
 ---
 
 <div style="text-align: justify">
-From March 2021, I work for <a href="https://sagarobotics.com/"> Saga Robotics Ltd. </a> as a Robotics Software Engineer. Here I do robot manipulation for autonomous strawberry picking. I have developed decision strategies which provides the intelligence required for the robot to choose a ripe berry from a list. Apart from robot manipulation, I have worked in the areas of deep learning for object detection, robot learning from human demonstrations, reinforcement learning for space debris removal, control systems and parallel manipulators
+From March 2021, I work for <a href="https://sagarobotics.com/"> Saga Robotics Ltd. </a> as a Robotics Software Engineer. Here I do robot manipulation for autonomous strawberry picking. I have developed decision strategies which provide the intelligence required for the robot to choose a ripe berry from a list. Apart from robot manipulation, I have worked in the areas of deep learning for object detection, robot learning from human demonstrations, reinforcement learning for space debris removal, control systems and parallel manipulators.
 </div>
