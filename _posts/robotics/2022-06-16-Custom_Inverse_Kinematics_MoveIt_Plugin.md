@@ -7,7 +7,7 @@ categories: Robotics Programming
 ---
 ### Introduction
 
-Solving inverse kinematics (IK) is a fundamental problem in robotics that converts task space co-ordinates to joint space variables. To solve for joint space values, `q's`, we require non-linear transcendental equations connecting the task-space and joint-space values or forward kinematic equations. As a simple case to understand this, lets take the case of a single degree of freedom planar robot arm having a revolute joint. We can write the forward kinematics as
+Solving inverse kinematics (IK) is a fundamental problem in robotics that converts task space co-ordinates to joint space variables. To solve for joint space values (`q's`) analytically, we require non-linear transcendental equations connecting the task-space and joint-space values or forward kinematic equations (Note that IK can be seen as a minimization problem as well). As a simple case to understand this, lets take the case of a single degree of freedom planar robot arm having a revolute joint. We can write the forward kinematics as
 \begin{align}
     x = l * \cos(q) \nonumber \newline
     y = l * \sin(q) \nonumber
@@ -34,7 +34,7 @@ catkin_create_pkg moveit_kinematics_plugin roscpp rospy pluginlib moveit_core
 * [getIKSolutions()](https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/src/TestKinematicsPlugin.cpp#L188) implements the solution (for example equation \ref{eqn:pend_ik}). Something **Important** that I found here is that if you have two joint variables `q1` and `q2` which respectively being the first and second joints, the `solutions` vector should implement something like  `solutions.push_back({q2, q1})`. (Something to be investigated again)
 * `isSolutionValid()` checks if the solution found is within the joint limits and `getNearestSolutionToSeed()` finds the solution that is closest to the seed state provided. This is implemented for my specific robot and may not be required in general.
 * The last but very important bit is the implementation of one of the overloaded `searchPositionIK()` method. I have numbered it as 4. Go through it and copy paste the function as such
-* The `solution_callback()` is provided if the configuration of the robot arm corresponding to the solution is collision free or not. This should be implemented for additional safety but the program would work even without this.
+* The `solution_callback()` is provided to check if the configuration of the robot arm corresponding to the solution is collision free or not. This should be implemented for additional safety but the program would work even without this.
 * Add the following as well in the `TestKinematicsPlugin.cpp`
 ```
 #include <class_loader/class_loader.hpp>
