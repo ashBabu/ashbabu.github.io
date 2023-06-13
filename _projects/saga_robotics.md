@@ -2,7 +2,7 @@
 layout: page
 title: Autonomous strawberry harvesting
 description: This involves object detection, tracking, motion planning for cutting
-youtubeId: Migq1HheNMg
+youtubeId: grar93n_B34
 img: assets/img/projects/strawberry_harvesting_saga.png
 importance: 0
 category: work

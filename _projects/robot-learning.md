@@ -4,7 +4,7 @@ title: Robot learning from human demonstration
 description: Teaching a Franka-Emika Panda to navigate in a cluttered environment
 youtubeId: NWx7IXqub5E
 img: assets/img/projects/robot-learning.png
-importance: 0
+importance: 1
 category: work
 ---
 

@@ -4,7 +4,7 @@ title: Remote monitoring and control
 description: A demonstration on remote monitoring and control using ROS, Unity and Hololens
 youtubeId: AJxj2P-jiZ4
 img: assets/img/projects/ros-unity-hololens.png
-importance: 1
+importance: 2
 category: work
 ---
 
