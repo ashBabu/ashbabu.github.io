@@ -1,7 +1,7 @@
 ---
 layout: page
 title: blog
-permalink: /blog/
+permalink: /blog/:year/:title/
 nav: true
 dropdown: true
 children: 
@@ -16,8 +16,8 @@ children:
     - title: divider
     - title: Reinforcement Learning
       permalink: /blog/category/reinforcement-learning/
+    - title: divider
     - title: Machine Learning
       permalink: /blog/category/machine-learning/
-
 
 ---

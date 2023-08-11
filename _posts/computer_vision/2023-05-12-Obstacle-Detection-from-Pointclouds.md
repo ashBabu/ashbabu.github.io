@@ -3,6 +3,7 @@ layout: post
 title: Obstacle Detection from Pointclouds on Raspberry Pi
 date: 2023-05-12 20:22:00-0500
 description: realsense camera, crop box filter from PCL, ground segmentation
+youtubeId: 90K8CWjifUs
 categories: Computer-Vision
 ---
 
@@ -217,6 +218,9 @@ def generate_launch_description():
 ```
 * Use the cropbox filter as above.
 
+
+<br />
+{% include youtubePlayer.html id=page.youtubeId %}
 
 
 
