@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Intel realsense camera on Raspberry Pi</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="realsense camera, crop box filter from PCL, ground segmentation" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2021/Intel-realsense-cam-on-RaspberryPi/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,55 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Intel realsense camera on Raspberry Pi</h1>
+    <p class="post-meta">November 13, 2021</p>
+    <p class="post-tags">
+      <a href="/blog/2021"> <i class="fas fa-calendar fa-sm"></i> 2021 </a>
+        ·  
+        <a href="/blog/category/Computer-Vision">
+          <i class="fas fa-tag fa-sm"></i> Computer-Vision</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <h3 id="prerequisites">Prerequisites</h3>
+<ul>
+  <li>Microsd card,</li>
+  <li>Microsd-SD adapter</li>
+  <li>A computer that can read and flash the microsd card.</li>
+</ul>
+
+<h3 id="procedure">Procedure</h3>
+<p>Read this <a href="https://dev.intelrealsense.com/docs/using-depth-camera-with-raspberry-pi-3" target="_blank" rel="noopener noreferrer">Using depth camera with Raspberry Pi 3</a> to get a general idea.</p>
+
+<ul>
+  <li>In the computer, <code class="language-plaintext highlighter-rouge">sudo apt-get install rpi-imager or snap install rpi-imager</code>
+</li>
+  <li>Open the imager and use the dropdown menu to select the OS version (Ubuntu server 20.04 for me) and where to write to (microSD card) and write</li>
+  <li>Put the microusb in the rPi slot and it would take on to the installation screen and will take a few minutes to finish.</li>
+  <li>For installing <code class="language-plaintext highlighter-rouge">librealsense</code>, follow the steps <strong>without</strong> the kernal patch as shown in <a href="https://github.com/IntelRealSense/librealsense/blob/development/doc/installation.md" target="_blank" rel="noopener noreferrer">Linux installation</a> or download the last version of <code class="language-plaintext highlighter-rouge">librealsense</code> (for ROS1) supported is <a href="https://github.com/IntelRealSense/librealsense/releases/tag/v2.50.0" target="_blank" rel="noopener noreferrer">v2.50.0</a>.</li>
+  <li>Build it with <code class="language-plaintext highlighter-rouge">cmake ../ -DBUILD_EXAMPLES=true -DBUILD_GRAPHICAL_EXAMPLES=true -DFORCE_RSUSB_BACKEND=ON</code>
+</li>
+  <li><code class="language-plaintext highlighter-rouge">make -j$(nproc)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">sudo make install</code></li>
+</ul>
+
+<h3 id="observations">Observations</h3>
+<p>The rPi was able to run the <code class="language-plaintext highlighter-rouge">realsense-viewer</code> and the camera showed both RGB and depth images. After running it for a few minutes, the rPi automatically rebooted. I suspect this could be because of overheating as the rPi was very hot to touch. So I added a fan and also a <a href="https://www.amazon.co.uk/dp/B09QRS666Y?ref_=cm_sw_r_apan_dp_M0NDDE6Q26BRT4SX2F6Z" target="_blank" rel="noopener noreferrer">battery</a> for portability.</p>
+
+<p><img style="float: left;" title="Camera calibration" src="/assets/img/computer-vision/rpi.jpg" alt="Camera Calibration" width="750" height="400"></p>
+
+
+  </article>
+
+</div>
 
     </div>
 

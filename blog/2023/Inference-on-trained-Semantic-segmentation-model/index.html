@@ -2,16 +2,17 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Part 02 : Inference on trained Semantic segmentation model</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +33,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2023/Inference-on-trained-Semantic-segmentation-model/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +115,83 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Part 02 : Inference on trained Semantic segmentation model</h1>
+    <p class="post-meta">July 29, 2023</p>
+    <p class="post-tags">
+      <a href="/blog/2023"> <i class="fas fa-calendar fa-sm"></i> 2023 </a>
+        ·  
+        <a href="/blog/category/Computer-Vision">
+          <i class="fas fa-tag fa-sm"></i> Computer-Vision</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <p>This briefly gives an overview of how a neural network could be used perform semantic segmentation inference. The <a href="/blog/2023/Semantic-segmentation/">previous post</a> showed how a model could be trained and this builds upon that.</p>
+
+<p>The training of the model is carried out by using models from <code class="language-plaintext highlighter-rouge">segmentation_models_pytorch</code> as this is an easy to use library for training several models. The training script is as follows</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import cv2
+import torch
+import numpy as np
+from PIL import Image
+import utils_fn as util
+import matplotlib.pyplot as plt
+use_opencv <span class="o">=</span> False
+
+imgPath <span class="o">=</span> <span class="s2">"path/to/the/image.png"</span>
+
+<span class="k">if </span>use_opencv:
+    imgCV2 <span class="o">=</span> cv2.imread<span class="o">(</span>imgPath<span class="o">)</span>
+    imgCV2 <span class="o">=</span> cv2.cvtColor<span class="o">(</span>imgCV2, cv2.COLOR_BGR2RGB<span class="o">)</span>
+    img_tensor <span class="o">=</span> util.transform<span class="o">(</span><span class="nv">image</span><span class="o">=</span>imgCV2<span class="o">)[</span><span class="s2">"image"</span><span class="o">]</span>.unsqueeze<span class="o">(</span>0<span class="o">)</span>
+<span class="k">else</span>:
+    imgPIL <span class="o">=</span> Image.open<span class="o">(</span>imgPath<span class="o">)</span>.convert<span class="o">(</span><span class="s2">"RGB"</span><span class="o">)</span>
+    img_tensor <span class="o">=</span> util.transform<span class="o">(</span><span class="nv">image</span><span class="o">=</span>np.array<span class="o">(</span>imgPIL<span class="o">))[</span><span class="s2">"image"</span><span class="o">]</span>.unsqueeze<span class="o">(</span>0<span class="o">)</span>
+
+model <span class="o">=</span> torch.load<span class="o">(</span><span class="s2">"chk_pts/trained_cityscapes_final.pth"</span><span class="o">)[</span><span class="s2">"model"</span><span class="o">]</span>
+model.to<span class="o">(</span>util.device<span class="o">)</span>
+model.eval<span class="o">()</span>
+<span class="c"># Get prediction:</span>
+with torch.no_grad<span class="o">()</span>:
+    prediction <span class="o">=</span> model<span class="o">(</span>img_tensor.to<span class="o">(</span>util.device<span class="o">))</span>.squeeze<span class="o">(</span>0<span class="o">)</span>
+
+invimg <span class="o">=</span> util.inv_normalize<span class="o">(</span>img_tensor<span class="o">)</span>.squeeze<span class="o">(</span>0<span class="o">)</span>
+output <span class="o">=</span> prediction.detach<span class="o">()</span>.cpu<span class="o">()</span>
+t <span class="o">=</span> torch.argmax<span class="o">(</span>output, 0<span class="o">)</span>
+decoded_output <span class="o">=</span> util.decode_segmap<span class="o">(</span>t<span class="o">)</span>
+
+<span class="k">if </span>use_opencv:
+    tt <span class="o">=</span> cv2.cvtColor<span class="o">(</span>decoded_output.astype<span class="o">(</span>np.float32<span class="o">)</span>, cv2.COLOR_RGB2BGR<span class="o">)</span>
+    numpy_horizontal <span class="o">=</span> np.hstack<span class="o">((</span>np.moveaxis<span class="o">(</span>invimg.numpy<span class="o">()</span>, 0, 2<span class="o">)</span>, tt<span class="o">))</span>
+    cv2.namedWindow<span class="o">(</span><span class="s2">"image"</span>, cv2.WINDOW_NORMAL<span class="o">)</span>
+    cv2.imshow<span class="o">(</span><span class="s1">'image'</span>, numpy_horizontal<span class="o">)</span>
+    cv2.waitKey<span class="o">(</span>0<span class="o">)</span>
+    cv2.destroyAllWindows<span class="o">()</span>
+<span class="k">else</span>:
+    fig, ax <span class="o">=</span> plt.subplots<span class="o">(</span><span class="nv">ncols</span><span class="o">=</span>2, <span class="nv">figsize</span><span class="o">=(</span>16, 50<span class="o">)</span>, <span class="nv">facecolor</span><span class="o">=</span><span class="s1">'white'</span><span class="o">)</span>
+    ax[0].imshow<span class="o">(</span>np.moveaxis<span class="o">(</span>invimg.numpy<span class="o">()</span>, 0, 2<span class="o">))</span>
+    ax[1].imshow<span class="o">(</span>decoded_output<span class="o">)</span>
+    plt.show<span class="o">()</span>
+print<span class="o">(</span><span class="s2">"done"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<h3 id="results">Results</h3>
+
+<p><img style="float: left;" title="Camera calibration" src="/assets/img/computer-vision/semantic_seg/semantic_segmentation_biefield.png" alt="Camera Calibration" width="750" height="400"></p>
+
+<p><img style="float: left;" title="Camera calibration" src="/assets/img/computer-vision/semantic_seg/semantic_segmentation_munich.png" width="750" height="400"></p>
+
+
+  </article>
+
+</div>
 
     </div>
 

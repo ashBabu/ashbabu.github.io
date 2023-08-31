@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Matplotlib in C++ with CMake</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="How to make a matplotlib-cpp work with CMake" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2020/MatplotlibCPP/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,93 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Matplotlib in C++ with CMake</h1>
+    <p class="post-meta">November 8, 2020</p>
+    <p class="post-tags">
+      <a href="/blog/2020"> <i class="fas fa-calendar fa-sm"></i> 2020 </a>
+        ·  
+        <a href="/blog/category/Programming">
+          <i class="fas fa-tag fa-sm"></i> Programming</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <p><a href="https://github.com/lava/matplotlib-cpp" target="_blank" rel="noopener noreferrer">Matplotlib-cpp</a> is a header only library that exposes the functionalities of python matplotlib library to C++. The following example plots a figure as shown below.</p>
+
+<figure class="highlight"><pre><code class="language-c--" data-lang="c++"><table class="rouge-table"><tbody><tr>
+<td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td>
+<td class="code"><pre>    <span class="cp">#include</span> <span class="cpf">"matplotlibcpp.h"</span><span class="cp">
+</span>    <span class="k">namespace</span> <span class="n">plt</span> <span class="o">=</span> <span class="n">matplotlibcpp</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">plt</span><span class="o">::</span><span class="n">plot</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">});</span>
+        <span class="n">plt</span><span class="o">::</span><span class="n">show</span><span class="p">();</span>
+    <span class="p">}</span>
+    
+</pre></td>
+</tr></tbody></table></code></pre></figure>
+
+<figure>
+
+  <picture>
+    <source media="(max-width: 480px)" srcset="/assets/img/programming/matplotlib-cpp-480.webp"></source>
+    <source media="(max-width: 800px)" srcset="/assets/img/programming/matplotlib-cpp-800.webp"></source>
+    <source media="(max-width: 1400px)" srcset="/assets/img/programming/matplotlib-cpp-1400.webp"></source>
+    <!-- Fallback to the original file -->
+    <img class="img-fluid rounded z-depth-1" src="/assets/img/programming/matplotlib-cpp.png" data-zoomable="">
+
+  </picture>
+
+</figure>
+
+<p><br>
+The command line code to build the program is as follows</p>
+
+<p><code class="language-plaintext highlighter-rouge">g++ minimal.cpp -o minimal -std=c++11 -I/usr/include/python2.7 -lpython2.7</code></p>
+
+<p>To make the same work with <code class="language-plaintext highlighter-rouge">CMake</code>, the required lines in <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> are</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake_minimum_required (VERSION 3.0)
+project(minimal)
+
+find_package(PythonLibs REQUIRED)
+find_package(PkgConfig REQUIRED)
+
+include_directories(
+    ${PYTHON2_INCLUDE_DIRS}
+    "/usr/include/python2.7"
+)
+
+add_executable(
+    ${PROJECT_NAME}
+    minimal.cpp
+)
+
+target_link_libraries(
+    ${PROJECT_NAME}
+    python2.7
+)
+</code></pre></div></div>
+
+
+  </article>
+
+</div>
 
     </div>
 

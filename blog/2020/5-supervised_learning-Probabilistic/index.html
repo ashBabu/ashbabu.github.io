@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Part5: Supervised Learning: Probabilistic regression</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="Building blocks of supervised learning" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2020/5-supervised_learning-Probabilistic/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,74 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Part5: Supervised Learning: Probabilistic regression</h1>
+    <p class="post-meta">May 1, 2020</p>
+    <p class="post-tags">
+      <a href="/blog/2020"> <i class="fas fa-calendar fa-sm"></i> 2020 </a>
+        ·  
+        <a href="/blog/category/Machine-Learning">
+          <i class="fas fa-tag fa-sm"></i> Machine-Learning</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <!-- <div style="text-align: justify"> <a href="https://www.ros.org/"> ROS </a> -->
+<p><!-- </div> --></p>
+
+<!-- \section{Probabilistic Regression} -->
+<p>The mathematical model for Probabilistic Regression is \(P(Y | X)\)  which means probability of output (\(Y\)) given input (\(X\)). This is assumed to be a normal distribution with mean \(w\) and variance \(\sigma^2\) which are unknown. <br>
+<strong>Assumption:</strong> Independent and identically distributed (i.i.d). For i.i.d’s, the total probability is the product of individual probabilities
+\begin{align}
+    P(Y|X) &amp;= \prod p(y_i|x_i) = \mathcal{N}(Y|X^Tw, \sigma^2I)\, \nonumber \newline
+    &amp;=\frac{1}{(2\pi)^{D/2}} \frac{1}{|\Sigma|^{1/2}} \exp [-\frac{1}{2} (X^Tw - Y)^T \Sigma^{-1} (X^Tw - Y) ]
+    \label{eqn:multivarGaussian}
+\end{align}
+where \(\Sigma = \sigma^2I\).   Eq. \ref{eqn:multivarGaussian} is the equation for Multivariate Gaussian Distribution</p>
+
+<h4 id="maximum-likelihood-estimation">Maximum Likelihood Estimation</h4>
+<p>The loss function becomes
+\begin{align}
+    L = P(Y|X) - \prod p(y_i|x_i) 
+    \label{eqn:maxLikeli}
+\end{align}
+Eq. \ref{eqn:maxLikeli} is very difficult to solve and hence a mathematical trick is done by trying to solve the maximum <strong>log</strong> likelihood because the maximum of both would be the same
+\begin{align}
+    L = \rm{log}~ P(Y|X) &amp;= \sum_i \rm{log}~ p(y_i|x_i) \nonumber \newline
+                &amp;= \sum_i(-\rm{log} ~Z) - \frac{1}{2} (X^Tw - Y)^T \Sigma^{-1} (X^Tw - Y)
+\end{align}
+where Z = 2\(\pi \Sigma\) terms which are constants. Removing the constant terms which does not dependent on the maximization, it becomes</p>
+
+<p>\begin{align}
+    L = \rm{log} ~ P(Y|X) = (X^Tw - Y)^T \Sigma^{-1} (X^Tw - Y)
+\end{align}
+which is exactly same as linear regression with \(\Sigma\) as identity.</p>
+
+<h4 id="maximum-a-posteriori-solution">Maximum a-posteriori solution</h4>
+<p>A prior distribution is required to predict the posterior distribution</p>
+
+<p>The mathematical model is \(P(Y|X,w)\)
+\begin{align}
+    \rm{posterior}~ p(w|D) = \frac{p(D|w)p(w)}{p(D)} \nonumber<br>
+\end{align}
+where D represents data 
+\begin{align}
+    L_{MAP} &amp;= \rm{log} ~p(w|D) \nonumber <br>
+           &amp;= \rm{log} ~p(D|w) + p(w) - p(D) \nonumber <br>
+           &amp;= \rm{log} ~p(Y|X,w) + p(w)
+\end{align}
+where <code class="language-plaintext highlighter-rouge">p(D)</code> is a constant and is not considered for optimization and <code class="language-plaintext highlighter-rouge">p(w)</code> is assumed to be normal distribution with mean zero and variance \(\lambda I\) or \(p(w) = \mathcal{N}(w|0, \lambda I)\). This makes MAP solution exactly same as Ridge regression</p>
+
+
+  </article>
+
+</div>
 
     </div>
 

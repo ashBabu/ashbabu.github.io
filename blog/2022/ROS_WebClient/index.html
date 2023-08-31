@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Remote monitoring on a web browser</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="A short intro on how to monitor robots on a browser" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2022/ROS_WebClient/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,46 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Remote monitoring on a web browser</h1>
+    <p class="post-meta">March 14, 2022</p>
+    <p class="post-tags">
+      <a href="/blog/2022"> <i class="fas fa-calendar fa-sm"></i> 2022 </a>
+        ·  
+        <a href="/blog/category/Robotics">
+          <i class="fas fa-tag fa-sm"></i> Robotics</a>  
+          <a href="/blog/category/ROS">
+          <i class="fas fa-tag fa-sm"></i> ROS</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <div style="text-align: justify">
+This article gives a brief explanation of how remote monitoring of robots integrated into <a href="https://www.ros.org/" target="_blank" rel="noopener noreferrer"> ROS </a>can be done in a web browser. Here I have integrated a live camera feed with robot states. Follow this <a href="https://wiki.ros.org/ros3djs/Tutorials/VisualizingAURDF" target="_blank" rel="noopener noreferrer"> tutorial </a> to get a feel of how this is done. In order for streaming live camera information, the images need to be compressed and republished. To solve some of the issues that may come up, this <a href="https://github.com/RobotWebTools/ros3djs/issues/209" target="_blank" rel="noopener noreferrer"> link </a> could be useful. A similar but another version of remote monitoring using a HoloLens is done in one of my <a href="/projects/ros-unity/"> projects </a>.
+</div>
+<p><br></p>
+<div class="embed-container">
+  <iframe src="https://www.youtube.com/embed/dXEoPc54iKo" width="775" height="480" frameborder="0" allowfullscreen="">
+  </iframe>
+</div>
+
+<p><br></p>
+
+<h3 id="resources">Resources</h3>
+<ul>
+  <li><a href="http://robotwebtools.org/" target="_blank" rel="noopener noreferrer">Robot Web Tools</a></li>
+  <li><a href="https://github.com/ashBabu/Utilities/wiki/Remote-Monitoring:-ROS-in-WebPage" target="_blank" rel="noopener noreferrer">My own collections</a></li>
+</ul>
+
+  </article>
+
+</div>
 
     </div>
 

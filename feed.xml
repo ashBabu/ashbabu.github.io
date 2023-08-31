@@ -1,0 +1,1082 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://ashbabu.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://ashbabu.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-08-31T12:25:57+00:00</updated><id>https://ashbabu.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+</subtitle><entry><title type="html">Part 03 : Deploying a trained Semantic segmentation model</title><link href="https://ashbabu.github.io/blog/2023/Deploying-trained-Semantic-segmentation-model/" rel="alternate" type="text/html" title="Part 03 : Deploying a trained Semantic segmentation model" /><published>2023-08-09T01:22:00+00:00</published><updated>2023-08-09T01:22:00+00:00</updated><id>https://ashbabu.github.io/blog/2023/Deploying-trained-Semantic-segmentation-model</id><content type="html" xml:base="https://ashbabu.github.io/blog/2023/Deploying-trained-Semantic-segmentation-model/"><![CDATA[<p>This article builds upon the previous two post, viz., <a href="/blog/2023/Semantic-segmentation/">training</a>, <a href="/blog/2023/Inference-on-trained-Semantic-segmentation-model/">inference</a> and shows how a live video stream from intel realsense camera could be used to do inference. This only gives a basic idea and there are other methods like <code class="language-plaintext highlighter-rouge">tensorrt</code>, <code class="language-plaintext highlighter-rouge">torchscript</code>, <code class="language-plaintext highlighter-rouge">onnx</code> etc for faster inference.</p>
+
+<p>The implementation uses ROS but it can be done otherwise as well using the realsense SDK</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+import torch
+import numpy as np
+import utils_fn as util
+from lightningModel import OurModel
+
+class Deploy<span class="o">(</span>object<span class="o">)</span>:
+    def __init__<span class="o">(</span>self, <span class="nv">modelPath</span><span class="o">=</span><span class="s2">"chk_pts/trained_cityscapes_final.pth"</span>, <span class="nv">lightning</span><span class="o">=</span>False<span class="o">)</span>:
+        <span class="c"># Params</span>
+        self.image <span class="o">=</span> None
+        self.lightning <span class="o">=</span> lightning
+        self.br <span class="o">=</span> CvBridge<span class="o">()</span>
+        <span class="c"># Node cycle rate (in Hz).</span>
+        self.loop_rate <span class="o">=</span> rospy.Rate<span class="o">(</span>1<span class="o">)</span>
+        self.modelPath <span class="o">=</span> modelPath
+        self.loadModel<span class="o">(</span>self.modelPath, <span class="nv">lightning</span><span class="o">=</span>self.lightning<span class="o">)</span>
+        self.imgPath <span class="o">=</span> <span class="s2">"../datasets/cityscapes/leftImg8bit/img.png"</span>
+        <span class="c"># Subscribers</span>
+        rospy.Subscriber<span class="o">(</span><span class="s2">"/camera/color/image_raw"</span>, Image, self.callback<span class="o">)</span>
+
+    def callback<span class="o">(</span>self, msg<span class="o">)</span>:
+        <span class="k">if </span>msg is not None:
+            rospy.loginfo<span class="o">(</span><span class="s1">'Image received...'</span><span class="o">)</span>
+            self.image <span class="o">=</span> self.br.imgmsg_to_cv2<span class="o">(</span>msg<span class="o">)</span>
+
+    def loadModel<span class="o">(</span>self, <span class="nv">modelPath</span><span class="o">=</span>None, <span class="nv">lightning</span><span class="o">=</span>False<span class="o">)</span>:
+        <span class="k">if </span>lightning:
+            self.model <span class="o">=</span> OurModel<span class="o">(</span><span class="nv">n_classes</span><span class="o">=</span>20<span class="o">)</span>
+            self.model.load_state_dict<span class="o">(</span>torch.load<span class="o">(</span><span class="s1">'chk_pts/model.pth'</span><span class="o">))</span>
+        <span class="k">elif </span>modelPath is not None:
+            self.model <span class="o">=</span> torch.load<span class="o">(</span>modelPath<span class="o">)[</span><span class="s2">"model"</span><span class="o">]</span>
+        <span class="k">else</span>:
+            self.model <span class="o">=</span> torch.load<span class="o">(</span>self.modelPath<span class="o">)[</span><span class="s2">"model"</span><span class="o">]</span>
+
+        self.model.to<span class="o">(</span>util.device<span class="o">)</span>
+        self.model.eval<span class="o">()</span>
+
+    def getPrediction<span class="o">(</span>self, img_tensor<span class="o">)</span>:
+        with torch.no_grad<span class="o">()</span>:
+            prediction <span class="o">=</span> self.model<span class="o">(</span>img_tensor.to<span class="o">(</span>util.device<span class="o">))</span>.squeeze<span class="o">(</span>0<span class="o">)</span>
+        <span class="k">return </span>prediction.detach<span class="o">()</span>.cpu<span class="o">()</span>
+
+    def postProcess<span class="o">(</span>self, prediction<span class="o">)</span>:
+        t <span class="o">=</span> torch.argmax<span class="o">(</span>prediction, 0<span class="o">)</span>
+        decoded_output <span class="o">=</span> util.decode_segmap<span class="o">(</span>t<span class="o">)</span>
+        <span class="k">return </span>cv2.cvtColor<span class="o">(</span>decoded_output.astype<span class="o">(</span>np.float32<span class="o">)</span>, cv2.COLOR_RGB2BGR<span class="o">)</span>
+
+    def showImage<span class="o">(</span>self, img<span class="o">)</span>:
+        cv2.namedWindow<span class="o">(</span><span class="s2">"Image window"</span>, cv2.WINDOW_NORMAL<span class="o">)</span>
+        cv2.imshow<span class="o">(</span><span class="s2">"Image window"</span>, img<span class="o">)</span>
+        cv2.waitKey<span class="o">(</span>3<span class="o">)</span>
+
+    def start<span class="o">(</span>self<span class="o">)</span>:
+        <span class="k">while </span>not rospy.is_shutdown<span class="o">()</span>:
+            <span class="k">if </span>self.image is not None:
+                imgCV2 <span class="o">=</span> cv2.cvtColor<span class="o">(</span>self.image, cv2.COLOR_BGR2RGB<span class="o">)</span>
+                img_tensor <span class="o">=</span> util.transform<span class="o">(</span><span class="nv">image</span><span class="o">=</span>imgCV2<span class="o">)[</span><span class="s2">"image"</span><span class="o">]</span>.unsqueeze<span class="o">(</span>0<span class="o">)</span>
+                invimg <span class="o">=</span> util.inv_normalize<span class="o">(</span>img_tensor<span class="o">)</span>.squeeze<span class="o">(</span>0<span class="o">)</span>
+                predicted <span class="o">=</span> self.getPrediction<span class="o">(</span>img_tensor<span class="o">)</span>
+                processed_image <span class="o">=</span> self.postProcess<span class="o">(</span>predicted<span class="o">)</span>
+                numpy_horizontal <span class="o">=</span> np.hstack<span class="o">((</span>np.moveaxis<span class="o">(</span>invimg.numpy<span class="o">()</span>, 0, 2<span class="o">)</span>, processed_image<span class="o">))</span>
+                self.showImage<span class="o">(</span>numpy_horizontal<span class="o">)</span>
+            self.loop_rate.sleep<span class="o">()</span>
+
+
+<span class="k">if </span>__name__ <span class="o">==</span> <span class="s1">'__main__'</span>:
+    rospy.init_node<span class="o">(</span><span class="s2">"deploy"</span>, <span class="nv">anonymous</span><span class="o">=</span>True<span class="o">)</span>
+    modelPath <span class="o">=</span> <span class="s2">"chk_pts/hrnet_latest.pth"</span>
+    my_node <span class="o">=</span> Deploy<span class="o">(</span><span class="nv">modelPath</span><span class="o">=</span>modelPath, <span class="nv">lightning</span><span class="o">=</span>True<span class="o">)</span>
+    my_node.start<span class="o">()</span>
+print<span class="o">(</span><span class="s2">"done"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<h3 id="explanation">Explanation</h3>
+<p>The <code class="language-plaintext highlighter-rouge">cv_bridge</code> package is used to convert <code class="language-plaintext highlighter-rouge">sensor_msgs/Image</code> to <code class="language-plaintext highlighter-rouge">opencv</code> format. This converted image is sent to the model for performing inference.</p>]]></content><author><name></name></author><category term="Computer-Vision" /><summary type="html"><![CDATA[This article builds upon the previous two post, viz., training, inference and shows how a live video stream from intel realsense camera could be used to do inference. This only gives a basic idea and there are other methods like tensorrt, torchscript, onnx etc for faster inference.]]></summary></entry><entry><title type="html">Part 02 : Inference on trained Semantic segmentation model</title><link href="https://ashbabu.github.io/blog/2023/Inference-on-trained-Semantic-segmentation-model/" rel="alternate" type="text/html" title="Part 02 : Inference on trained Semantic segmentation model" /><published>2023-07-29T01:22:00+00:00</published><updated>2023-07-29T01:22:00+00:00</updated><id>https://ashbabu.github.io/blog/2023/Inference-on-trained-Semantic-segmentation-model</id><content type="html" xml:base="https://ashbabu.github.io/blog/2023/Inference-on-trained-Semantic-segmentation-model/"><![CDATA[<p>This briefly gives an overview of how a neural network could be used perform semantic segmentation inference. The <a href="/blog/2023/Semantic-segmentation/">previous post</a> showed how a model could be trained and this builds upon that.</p>
+
+<p>The training of the model is carried out by using models from <code class="language-plaintext highlighter-rouge">segmentation_models_pytorch</code> as this is an easy to use library for training several models. The training script is as follows</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import cv2
+import torch
+import numpy as np
+from PIL import Image
+import utils_fn as util
+import matplotlib.pyplot as plt
+use_opencv <span class="o">=</span> False
+
+imgPath <span class="o">=</span> <span class="s2">"path/to/the/image.png"</span>
+
+<span class="k">if </span>use_opencv:
+    imgCV2 <span class="o">=</span> cv2.imread<span class="o">(</span>imgPath<span class="o">)</span>
+    imgCV2 <span class="o">=</span> cv2.cvtColor<span class="o">(</span>imgCV2, cv2.COLOR_BGR2RGB<span class="o">)</span>
+    img_tensor <span class="o">=</span> util.transform<span class="o">(</span><span class="nv">image</span><span class="o">=</span>imgCV2<span class="o">)[</span><span class="s2">"image"</span><span class="o">]</span>.unsqueeze<span class="o">(</span>0<span class="o">)</span>
+<span class="k">else</span>:
+    imgPIL <span class="o">=</span> Image.open<span class="o">(</span>imgPath<span class="o">)</span>.convert<span class="o">(</span><span class="s2">"RGB"</span><span class="o">)</span>
+    img_tensor <span class="o">=</span> util.transform<span class="o">(</span><span class="nv">image</span><span class="o">=</span>np.array<span class="o">(</span>imgPIL<span class="o">))[</span><span class="s2">"image"</span><span class="o">]</span>.unsqueeze<span class="o">(</span>0<span class="o">)</span>
+
+model <span class="o">=</span> torch.load<span class="o">(</span><span class="s2">"chk_pts/trained_cityscapes_final.pth"</span><span class="o">)[</span><span class="s2">"model"</span><span class="o">]</span>
+model.to<span class="o">(</span>util.device<span class="o">)</span>
+model.eval<span class="o">()</span>
+<span class="c"># Get prediction:</span>
+with torch.no_grad<span class="o">()</span>:
+    prediction <span class="o">=</span> model<span class="o">(</span>img_tensor.to<span class="o">(</span>util.device<span class="o">))</span>.squeeze<span class="o">(</span>0<span class="o">)</span>
+
+invimg <span class="o">=</span> util.inv_normalize<span class="o">(</span>img_tensor<span class="o">)</span>.squeeze<span class="o">(</span>0<span class="o">)</span>
+output <span class="o">=</span> prediction.detach<span class="o">()</span>.cpu<span class="o">()</span>
+t <span class="o">=</span> torch.argmax<span class="o">(</span>output, 0<span class="o">)</span>
+decoded_output <span class="o">=</span> util.decode_segmap<span class="o">(</span>t<span class="o">)</span>
+
+<span class="k">if </span>use_opencv:
+    tt <span class="o">=</span> cv2.cvtColor<span class="o">(</span>decoded_output.astype<span class="o">(</span>np.float32<span class="o">)</span>, cv2.COLOR_RGB2BGR<span class="o">)</span>
+    numpy_horizontal <span class="o">=</span> np.hstack<span class="o">((</span>np.moveaxis<span class="o">(</span>invimg.numpy<span class="o">()</span>, 0, 2<span class="o">)</span>, tt<span class="o">))</span>
+    cv2.namedWindow<span class="o">(</span><span class="s2">"image"</span>, cv2.WINDOW_NORMAL<span class="o">)</span>
+    cv2.imshow<span class="o">(</span><span class="s1">'image'</span>, numpy_horizontal<span class="o">)</span>
+    cv2.waitKey<span class="o">(</span>0<span class="o">)</span>
+    cv2.destroyAllWindows<span class="o">()</span>
+<span class="k">else</span>:
+    fig, ax <span class="o">=</span> plt.subplots<span class="o">(</span><span class="nv">ncols</span><span class="o">=</span>2, <span class="nv">figsize</span><span class="o">=(</span>16, 50<span class="o">)</span>, <span class="nv">facecolor</span><span class="o">=</span><span class="s1">'white'</span><span class="o">)</span>
+    ax[0].imshow<span class="o">(</span>np.moveaxis<span class="o">(</span>invimg.numpy<span class="o">()</span>, 0, 2<span class="o">))</span>
+    ax[1].imshow<span class="o">(</span>decoded_output<span class="o">)</span>
+    plt.show<span class="o">()</span>
+print<span class="o">(</span><span class="s2">"done"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<h3 id="results">Results</h3>
+
+<p><img style="float: left;" title="Camera calibration" src="/assets/img/computer-vision/semantic_seg/semantic_segmentation_biefield.png" alt="Camera Calibration" width="750" height="400" /></p>
+
+<p><img style="float: left;" title="Camera calibration" src="/assets/img/computer-vision/semantic_seg/semantic_segmentation_munich.png" width="750" height="400" /></p>]]></content><author><name></name></author><category term="Computer-Vision" /><summary type="html"><![CDATA[This briefly gives an overview of how a neural network could be used perform semantic segmentation inference. The previous post showed how a model could be trained and this builds upon that.]]></summary></entry><entry><title type="html">Part 01 : Training a Semantic segmentation model</title><link href="https://ashbabu.github.io/blog/2023/Semantic-segmentation/" rel="alternate" type="text/html" title="Part 01 : Training a Semantic segmentation model" /><published>2023-07-16T01:22:00+00:00</published><updated>2023-07-16T01:22:00+00:00</updated><id>https://ashbabu.github.io/blog/2023/Semantic-segmentation</id><content type="html" xml:base="https://ashbabu.github.io/blog/2023/Semantic-segmentation/"><![CDATA[<p>This briefly gives an overview of how a neural network could be trainded to perform semantic segmentation. I use the <a href="https://www.cityscapes-dataset.com/login/">Cityscapes dataset</a>. You would require a login id and password to download the dataset. Once you obtain this, download the <code class="language-plaintext highlighter-rouge">gtFine_trainvaltest.zip</code> and the <code class="language-plaintext highlighter-rouge">leftImg8bit_trainvaltest.zip</code>. Setup your virtual environment with</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">numpy</code>, <code class="language-plaintext highlighter-rouge">Pillow</code>, <code class="language-plaintext highlighter-rouge">albumentations</code>, <code class="language-plaintext highlighter-rouge">typing_extensions</code>, <code class="language-plaintext highlighter-rouge">torchvision==0.15.2</code>, <code class="language-plaintext highlighter-rouge">torch==2.0.1</code>, <code class="language-plaintext highlighter-rouge">segmentation-models-pytorch</code>, <code class="language-plaintext highlighter-rouge">torchmetrics</code>, <code class="language-plaintext highlighter-rouge">opencv-python</code>, <code class="language-plaintext highlighter-rouge">matplotlib</code></li>
+</ul>
+
+<p>I have created a utility function python file which does all the repeated tasks and it is as follows</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import torch
+import numpy as np
+from PIL import Image
+import albumentations as A
+from typing import Any, Tuple
+import torchvision.transforms as T
+from torchvision.datasets import Cityscapes
+from albumentations.pytorch import ToTensorV2
+
+
+def save_checkpoint<span class="o">(</span>epoch, model, optimizer, <span class="nv">name</span><span class="o">=</span><span class="s2">"chkpt.pth.tar"</span><span class="o">)</span>:
+    <span class="s2">"""
+    Save model checkpoint.
+
+    :param epoch: epoch number
+    :param model: model
+    :param optimizer: optimizer
+    :param name: name of the saved model
+    """</span>
+    state <span class="o">=</span> <span class="o">{</span><span class="s1">'epoch'</span>: epoch,
+             <span class="s1">'model'</span>: model,
+             <span class="s1">'optimizer'</span>: optimizer<span class="o">}</span>
+    torch.save<span class="o">(</span>state, name<span class="o">)</span>
+
+
+def writeToFile<span class="o">(</span>content, <span class="nv">filename</span><span class="o">=</span><span class="s2">"metrics.txt"</span>, <span class="nv">mode</span><span class="o">=</span><span class="s2">"w"</span> <span class="o">)</span>:
+    with open<span class="o">(</span>filename, mode<span class="o">)</span> as f:
+        f.write<span class="o">(</span>str<span class="o">(</span>content<span class="o">))</span>
+    f.close<span class="o">()</span>
+
+device <span class="o">=</span> torch.device<span class="o">(</span><span class="s2">"cuda:0"</span> <span class="k">if </span>torch.cuda.is_available<span class="o">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="o">)</span>
+
+inv_normalize <span class="o">=</span> T.Normalize<span class="o">(</span>
+    <span class="nv">mean</span><span class="o">=[</span><span class="nt">-0</span>.485 / 0.229, <span class="nt">-0</span>.456 / 0.224, <span class="nt">-0</span>.406 / 0.225],
+    <span class="nv">std</span><span class="o">=[</span>1 / 0.229, 1 / 0.224, 1 / 0.255]
+<span class="o">)</span>
+
+ignore_index <span class="o">=</span> 255
+void_classes <span class="o">=</span> <span class="o">[</span>0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, <span class="nt">-1</span><span class="o">]</span>
+valid_classes <span class="o">=</span> <span class="o">[</span>ignore_index, 7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33]
+class_names <span class="o">=</span> <span class="o">[</span><span class="s1">'unlabelled'</span>, <span class="s1">'road'</span>, <span class="s1">'sidewalk'</span>, <span class="s1">'building'</span>, <span class="s1">'wall'</span>, <span class="s1">'fence'</span>, <span class="s1">'pole'</span>, <span class="s1">'traffic_light'</span>, <span class="se">\</span>
+               <span class="s1">'traffic_sign'</span>, <span class="s1">'vegetation'</span>, <span class="s1">'terrain'</span>, <span class="s1">'sky'</span>, <span class="s1">'person'</span>, <span class="s1">'rider'</span>, <span class="s1">'car'</span>, <span class="s1">'truck'</span>, <span class="s1">'bus'</span>, <span class="se">\</span>
+               <span class="s1">'train'</span>, <span class="s1">'motorcycle'</span>, <span class="s1">'bicycle'</span><span class="o">]</span>
+<span class="c">#why i choose 20 classes</span>
+<span class="c">#https://stackoverflow.com/a/64242989</span>
+
+class_map <span class="o">=</span> dict<span class="o">(</span>zip<span class="o">(</span>valid_classes, range<span class="o">(</span>len<span class="o">(</span>valid_classes<span class="o">))))</span>
+num_of_classes <span class="o">=</span> len<span class="o">(</span>valid_classes<span class="o">)</span>
+
+colors <span class="o">=</span> <span class="o">[[</span>0,   0,   0],
+        <span class="o">[</span>128, 64, 128],
+        <span class="o">[</span>244, 35, 232],
+        <span class="o">[</span>70, 70, 70],
+        <span class="o">[</span>102, 102, 156],
+        <span class="o">[</span>190, 153, 153],
+        <span class="o">[</span>153, 153, 153],
+        <span class="o">[</span>250, 170, 30],
+        <span class="o">[</span>220, 220, 0],
+        <span class="o">[</span>107, 142, 35],
+        <span class="o">[</span>152, 251, 152],
+        <span class="o">[</span>0, 130, 180],
+        <span class="o">[</span>220, 20, 60],
+        <span class="o">[</span>255, 0, 0],
+        <span class="o">[</span>0, 0, 142],
+        <span class="o">[</span>0, 0, 70],
+        <span class="o">[</span>0, 60, 100],
+        <span class="o">[</span>0, 80, 100],
+        <span class="o">[</span>0, 0, 230],
+        <span class="o">[</span>119, 11, 32],
+    <span class="o">]</span>
+
+label_colours <span class="o">=</span> dict<span class="o">(</span>zip<span class="o">(</span>range<span class="o">(</span>num_of_classes<span class="o">)</span>, colors<span class="o">))</span>
+
+transform <span class="o">=</span> A.Compose<span class="o">(</span>
+<span class="o">[</span>
+    <span class="c"># A.Resize(224, 224),</span>
+    A.Resize<span class="o">(</span>256, 512<span class="o">)</span>,
+    A.HorizontalFlip<span class="o">()</span>,
+    A.Normalize<span class="o">(</span><span class="nv">mean</span><span class="o">=(</span>0.485, 0.456, 0.406<span class="o">)</span>, <span class="nv">std</span><span class="o">=(</span>0.229, 0.224, 0.225<span class="o">))</span>,
+    ToTensorV2<span class="o">()</span>,
+<span class="o">]</span>
+<span class="o">)</span>
+
+
+def encode_segmap<span class="o">(</span>mask<span class="o">)</span>:
+    <span class="c">#remove unwanted classes and recitify the labels of wanted classes</span>
+    <span class="k">for </span>_voidc <span class="k">in </span>void_classes:
+        mask[mask <span class="o">==</span> _voidc] <span class="o">=</span> ignore_index
+    <span class="k">for </span>_validc <span class="k">in </span>valid_classes:
+        mask[mask <span class="o">==</span> _validc] <span class="o">=</span> class_map[_validc]
+    <span class="k">return </span>mask
+
+
+def decode_segmap<span class="o">(</span>temp<span class="o">)</span>:
+    <span class="c">#convert gray scale to color</span>
+    a <span class="o">=</span> label_colours.copy<span class="o">()</span>
+    temp <span class="o">=</span> temp.numpy<span class="o">()</span>
+    r <span class="o">=</span> temp.copy<span class="o">()</span>
+    g <span class="o">=</span> temp.copy<span class="o">()</span>
+    b <span class="o">=</span> temp.copy<span class="o">()</span>
+    <span class="k">for </span>l <span class="k">in </span>range<span class="o">(</span>0, num_of_classes<span class="o">)</span>:
+        r[temp <span class="o">==</span> l] <span class="o">=</span> label_colours[l][0]
+        g[temp <span class="o">==</span> l] <span class="o">=</span> label_colours[l][1]
+        b[temp <span class="o">==</span> l] <span class="o">=</span> label_colours[l][2]
+
+    rr, gg, bb <span class="o">=</span> temp.copy<span class="o">()</span>, temp.copy<span class="o">()</span>, temp.copy<span class="o">()</span>
+    <span class="k">for </span>l <span class="k">in </span>range<span class="o">(</span>num_of_classes<span class="o">)</span>:
+        <span class="k">for </span>i <span class="k">in </span>range<span class="o">(</span>temp.shape[0]<span class="o">)</span>:
+            <span class="k">for </span>j <span class="k">in </span>range<span class="o">(</span>temp.shape[1]<span class="o">)</span>:
+                <span class="k">if </span>temp[i, j] <span class="o">==</span> l:
+                    rr[i, j] <span class="o">=</span> label_colours[l][0]
+                    gg[i, j] <span class="o">=</span> label_colours[l][1]
+                    bb[i, j] <span class="o">=</span> label_colours[l][2]
+
+    rgb <span class="o">=</span> np.zeros<span class="o">((</span>temp.shape[0], temp.shape[1], 3<span class="o">))</span>
+    rgb[:, :, 0] <span class="o">=</span> r / 255.0
+    rgb[:, :, 1] <span class="o">=</span> g / 255.0
+    rgb[:, :, 2] <span class="o">=</span> b / 255.0
+    <span class="k">return </span>rgb
+
+
+class MyClass<span class="o">(</span>Cityscapes<span class="o">)</span>:
+    def __getitem__<span class="o">(</span>self, index: int<span class="o">)</span> -&gt; Tuple[Any, Any]:
+        image <span class="o">=</span> Image.open<span class="o">(</span>self.images[index]<span class="o">)</span>.convert<span class="o">(</span><span class="s1">'RGB'</span><span class="o">)</span>
+
+        targets: Any <span class="o">=</span> <span class="o">[]</span>
+        <span class="k">for </span>i, t <span class="k">in </span>enumerate<span class="o">(</span>self.target_type<span class="o">)</span>:
+            <span class="k">if </span>t <span class="o">==</span> <span class="s1">'polygon'</span>:
+                target <span class="o">=</span> self._load_json<span class="o">(</span>self.targets[index][i]<span class="o">)</span>
+            <span class="k">else</span>:
+                target <span class="o">=</span> Image.open<span class="o">(</span>self.targets[index][i]<span class="o">)</span>
+            targets.append<span class="o">(</span>target<span class="o">)</span>
+        target <span class="o">=</span> tuple<span class="o">(</span>targets<span class="o">)</span> <span class="k">if </span>len<span class="o">(</span>targets<span class="o">)</span> <span class="o">&gt;</span> 1 <span class="k">else </span>targets[0]
+
+        <span class="k">if </span>self.transforms is not None:
+            transformed <span class="o">=</span> transform<span class="o">(</span><span class="nv">image</span><span class="o">=</span>np.array<span class="o">(</span>image<span class="o">)</span>, <span class="nv">mask</span><span class="o">=</span>np.array<span class="o">(</span>target<span class="o">))</span>
+        <span class="k">return </span>transformed[<span class="s1">'image'</span><span class="o">]</span>, transformed[<span class="s1">'mask'</span><span class="o">]</span>
+</code></pre></div></div>
+
+<p>The training of the model is carried out by using models from <code class="language-plaintext highlighter-rouge">segmentation_models_pytorch</code> as this is an easy to use library for training several models. The training script is as follows</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import torch
+import torchmetrics
+import utils_fn as utl
+import multiprocessing
+from torch.utils.data import DataLoader
+import segmentation_models_pytorch as smp
+
+transform <span class="o">=</span> utl.transform
+numworker <span class="o">=</span> multiprocessing.cpu_count<span class="o">()</span> // 4
+batch_size <span class="o">=</span> 32
+
+trainset <span class="o">=</span> utl.MyClass<span class="o">(</span><span class="s1">'../../datasets/cityscapes/'</span>, <span class="nb">split</span><span class="o">=</span><span class="s1">'train'</span>, <span class="nv">mode</span><span class="o">=</span><span class="s1">'fine'</span>, <span class="nv">target_type</span><span class="o">=</span><span class="s1">'semantic'</span>, <span class="nv">transforms</span><span class="o">=</span>utl.transform<span class="o">)</span>
+valset <span class="o">=</span> utl.MyClass<span class="o">(</span><span class="s1">'../../datasets/cityscapes/'</span>, <span class="nb">split</span><span class="o">=</span><span class="s1">'val'</span>, <span class="nv">mode</span><span class="o">=</span><span class="s1">'fine'</span>, <span class="nv">target_type</span><span class="o">=</span><span class="s1">'semantic'</span>, <span class="nv">transforms</span><span class="o">=</span>utl.transform<span class="o">)</span>
+trainloader <span class="o">=</span> DataLoader<span class="o">(</span>trainset, <span class="nv">batch_size</span><span class="o">=</span>batch_size,  <span class="nv">shuffle</span><span class="o">=</span>True, <span class="nv">num_workers</span><span class="o">=</span>numworker, <span class="nv">pin_memory</span><span class="o">=</span>True<span class="o">)</span>
+valloader <span class="o">=</span> DataLoader<span class="o">(</span>valset, <span class="nv">batch_size</span><span class="o">=</span>batch_size,  <span class="nv">shuffle</span><span class="o">=</span>False, <span class="nv">num_workers</span><span class="o">=</span>numworker, <span class="nv">pin_memory</span><span class="o">=</span>True<span class="o">)</span>
+
+<span class="c"># https://github.com/qubvel/segmentation_models.pytorch#models</span>
+model <span class="o">=</span> smp.Unet<span class="o">(</span>
+        <span class="nv">encoder_name</span><span class="o">=</span><span class="s2">"timm-mobilenetv3_small_minimal_100"</span>, <span class="c"># choose encoder, e.g. mobilenet_v2 or efficientnet-b7</span>
+        <span class="nv">encoder_weights</span><span class="o">=</span><span class="s2">"imagenet"</span>,     <span class="c"># use `imagenet` pre-trained weights for encoder initialization</span>
+        <span class="nv">in_channels</span><span class="o">=</span>3,                  <span class="c"># model input channels (1 for gray-scale images, 3 for RGB, etc.)</span>
+        <span class="nv">classes</span><span class="o">=</span>utl.num_of_classes,
+        <span class="o">)</span>
+
+model <span class="o">=</span> model.to<span class="o">(</span>utl.device<span class="o">)</span>
+
+
+lr <span class="o">=</span> 0.001
+momentum <span class="o">=</span> 0.9
+weightDecay <span class="o">=</span> 0.005
+
+params <span class="o">=</span> <span class="o">[</span>p <span class="k">for </span>p <span class="k">in </span>model.parameters<span class="o">()</span> <span class="k">if </span>p.requires_grad]
+optimizer <span class="o">=</span> torch.optim.AdamW<span class="o">(</span>params, <span class="nv">lr</span><span class="o">=</span>lr<span class="o">)</span>
+metrics <span class="o">=</span> torchmetrics.JaccardIndex<span class="o">(</span><span class="nv">num_classes</span><span class="o">=</span>utl.num_of_classes, <span class="nv">task</span><span class="o">=</span><span class="s2">"multiclass"</span><span class="o">)</span>
+metrics1 <span class="o">=</span> torchmetrics.classification.Accuracy<span class="o">(</span><span class="nv">num_classes</span><span class="o">=</span>utl.num_of_classes, <span class="nv">task</span><span class="o">=</span><span class="s2">"multiclass"</span><span class="o">)</span>
+
+criterion <span class="o">=</span> smp.losses.DiceLoss<span class="o">(</span><span class="nv">mode</span><span class="o">=</span><span class="s1">'multiclass'</span><span class="o">)</span>
+
+dataloader <span class="o">=</span> <span class="o">{</span><span class="s2">"train"</span>: trainloader, <span class="s2">"val"</span>: valloader<span class="o">}</span>
+
+
+def train_model<span class="o">(</span>model, dataloader, criterion, optimizer, num_epochs, <span class="nv">load_chkpt</span><span class="o">=</span>False, <span class="nv">path</span><span class="o">=</span>None<span class="o">)</span>:
+    <span class="k">for </span>epoch <span class="k">in </span>range<span class="o">(</span>num_epochs<span class="o">)</span>:
+        print<span class="o">(</span>f<span class="s2">"Epoch: {epoch}/{num_epochs}"</span><span class="o">)</span>
+        train_loss <span class="o">=</span> 0.0
+        model.train<span class="o">()</span>
+        ii <span class="o">=</span> 0
+        <span class="k">for </span>inputs, labels <span class="k">in </span>trainloader:
+            <span class="k">if </span>ii % 100 <span class="o">==</span> 0:
+                print<span class="o">(</span>ii<span class="o">)</span>
+            inputs <span class="o">=</span> inputs.to<span class="o">(</span>utl.device<span class="o">)</span>
+            labels <span class="o">=</span> labels.to<span class="o">(</span>utl.device<span class="o">)</span>.long<span class="o">()</span>
+            optimizer.zero_grad<span class="o">()</span>
+            predictions <span class="o">=</span> model.forward<span class="o">(</span>inputs<span class="o">)</span>
+            target <span class="o">=</span> utl.encode_segmap<span class="o">(</span>labels<span class="o">)</span>
+            loss <span class="o">=</span> criterion<span class="o">(</span>predictions, target<span class="o">)</span>
+            acc <span class="o">=</span> metrics1<span class="o">(</span>predictions, target<span class="o">)</span>
+            loss.backward<span class="o">()</span>
+            optimizer.step<span class="o">()</span>
+            train_loss +<span class="o">=</span> loss.item<span class="o">()</span>
+            ii +<span class="o">=</span> 1
+
+        valid_loss <span class="o">=</span> 0.0
+        model.eval<span class="o">()</span>  <span class="c"># Optional when not using Model Specific layer</span>
+        <span class="k">for </span>inputs, labels <span class="k">in </span>valloader:
+            inputs <span class="o">=</span> inputs.to<span class="o">(</span>utl.device<span class="o">)</span>
+            labels <span class="o">=</span> labels.to<span class="o">(</span>utl.device<span class="o">)</span>.long<span class="o">()</span>
+            predictions <span class="o">=</span> model.forward<span class="o">(</span>inputs<span class="o">)</span>
+            target <span class="o">=</span> utl.encode_segmap<span class="o">(</span>labels<span class="o">)</span>
+            loss <span class="o">=</span> criterion<span class="o">(</span>predictions, target<span class="o">)</span>
+            valid_loss <span class="o">=</span> loss.item<span class="o">()</span> <span class="k">*</span> inputs.size<span class="o">(</span>0<span class="o">)</span>
+
+        print<span class="o">(</span>f<span class="s1">'Epoch {epoch + 1} \t\t Training Loss: {train_loss / len(trainloader)} \t\t Validation Loss: {valid_loss / len(valloader)}'</span><span class="o">)</span>
+        <span class="k">if </span>not epoch % 20 and epoch <span class="o">!=</span> num_epochs:  <span class="c"># save model every 20 epoch</span>
+            print<span class="o">(</span><span class="s2">"Saving model"</span><span class="o">)</span>
+            utl.save_checkpoint<span class="o">(</span><span class="nv">epoch</span><span class="o">=</span>epoch, <span class="nv">model</span><span class="o">=</span>model, <span class="nv">optimizer</span><span class="o">=</span>optimizer,
+                                <span class="nv">name</span><span class="o">=</span><span class="s2">"chk_pts/trained_cityscapes_"</span> + model.name + <span class="s2">"_"</span> + str<span class="o">(</span>epoch<span class="o">)</span> + <span class="s2">".pth"</span><span class="o">)</span>
+        <span class="k">if </span>epoch <span class="o">==</span> num_epochs - 1:
+            utl.save_checkpoint<span class="o">(</span><span class="nv">epoch</span><span class="o">=</span>epoch, <span class="nv">model</span><span class="o">=</span>model, <span class="nv">optimizer</span><span class="o">=</span>optimizer,
+                                <span class="nv">name</span><span class="o">=</span><span class="s2">"chk_pts/trained_cityscapes_final_"</span> + model.name + <span class="s2">".pth"</span><span class="o">)</span>
+            acc <span class="o">=</span> metrics1.compute<span class="o">()</span>
+            content <span class="o">=</span> <span class="o">{</span><span class="s2">"Accuracy"</span>: acc.item<span class="o">()</span>, <span class="s2">"Epochs"</span>: epoch+1, <span class="s2">"ModelName"</span>: model.name, <span class="s2">"Train_loss"</span>: train_loss, <span class="s2">"Valid_loss"</span>: valid_loss<span class="o">}</span>
+            utl.writeToFile<span class="o">(</span><span class="nv">content</span><span class="o">=</span>content, <span class="nv">filename</span><span class="o">=</span>model.name + <span class="s2">"_metrics.txt"</span>, <span class="nv">mode</span><span class="o">=</span><span class="s2">"w"</span><span class="o">)</span>
+
+chkpt_path <span class="o">=</span> <span class="s2">"chk_pts/trained_cityscapes.pth"</span>
+train_model<span class="o">(</span><span class="nv">model</span><span class="o">=</span>model, <span class="nv">dataloader</span><span class="o">=</span>dataloader, <span class="nv">criterion</span><span class="o">=</span>criterion, <span class="nv">optimizer</span><span class="o">=</span>optimizer, <span class="nv">num_epochs</span><span class="o">=</span>10,
+            <span class="nv">load_chkpt</span><span class="o">=</span>False, <span class="nv">path</span><span class="o">=</span>chkpt_path<span class="o">)</span>
+print<span class="o">(</span><span class="s2">"done"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<h3 id="a-few-things-to-note">A few things to note</h3>
+<ul>
+  <li>Here <code class="language-plaintext highlighter-rouge">../../datasets/cityscapes/</code> is the folder where the <code class="language-plaintext highlighter-rouge">gtFine</code> and <code class="language-plaintext highlighter-rouge">leftImg8bit</code> folders are present. Both these folders are inside the downloaded and extracted <code class="language-plaintext highlighter-rouge">gtFine_trainvaltest.zip</code> and the <code class="language-plaintext highlighter-rouge">leftImg8bit_trainvaltest.zip</code> respectively.</li>
+  <li>Albumentations is much faster than the torchvision.transforms library</li>
+  <li>Play aroud with the model as explained in the <a href="https://github.com/qubvel/segmentation_models.pytorch#models">segmentations_model_pytorch github</a></li>
+</ul>]]></content><author><name></name></author><category term="Computer-Vision" /><summary type="html"><![CDATA[This briefly gives an overview of how a neural network could be trainded to perform semantic segmentation. I use the Cityscapes dataset. You would require a login id and password to download the dataset. Once you obtain this, download the gtFine_trainvaltest.zip and the leftImg8bit_trainvaltest.zip. Setup your virtual environment with numpy, Pillow, albumentations, typing_extensions, torchvision==0.15.2, torch==2.0.1, segmentation-models-pytorch, torchmetrics, opencv-python, matplotlib]]></summary></entry><entry><title type="html">Obstacle Detection from Pointclouds on Raspberry Pi</title><link href="https://ashbabu.github.io/blog/2023/Obstacle-Detection-from-Pointclouds/" rel="alternate" type="text/html" title="Obstacle Detection from Pointclouds on Raspberry Pi" /><published>2023-05-13T01:22:00+00:00</published><updated>2023-05-13T01:22:00+00:00</updated><id>https://ashbabu.github.io/blog/2023/Obstacle-Detection-from-Pointclouds</id><content type="html" xml:base="https://ashbabu.github.io/blog/2023/Obstacle-Detection-from-Pointclouds/"><![CDATA[<p>The aim here is to detect obstacles using stereo cameras which are just in front of the camera by segmenting the pointclouds into ground and the rest as obstacles. I am using intel realsense d435i for this task. The implementation can be done in <code class="language-plaintext highlighter-rouge">ROS</code> or <code class="language-plaintext highlighter-rouge">ROS2</code>. This is done on a Ubuntu linux system.</p>
+
+<h3 id="pre-requisites">Pre-requisites</h3>
+<ul>
+  <li>Method 1:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">sudo apt-get install ros-$ROS_DISTRO-realsense2*</code> would install both <code class="language-plaintext highlighter-rouge">librealsense</code> and <code class="language-plaintext highlighter-rouge">realsense-ros</code></li>
+    </ul>
+  </li>
+  <li>Method 2: For some reason, if the above dont work
+    <ul>
+      <li>Install the librealsense library on Raspberry Pi by following this <a href="/blog/2021/Intel-realsense-cam-on-RaspberryPi/">link</a></li>
+      <li>Install the realsense <a href="https://github.com/IntelRealSense/realsense-ros/releases/tag/2.3.2">ROS Wrapper</a></li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">sudo apt install ros-$ROS_DISTRO-rtabmap-ros</code></li>
+</ul>
+
+<p>The above would install all the required packages for ROS or ROS2.</p>
+
+<h3 id="ros1-specific-implementation">ROS1 specific implementation</h3>
+<ul>
+  <li>Launch the realsense camera as follows</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;launch&gt;
+   &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"tf"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"static_transform_publisher"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"base_2_camera"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"0 0 0 0 0 0 1 base_link camera_link 100"</span> /&gt;
+    &lt;<span class="o">!</span><span class="nt">--</span>     &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"tf"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"static_transform_publisher"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"cam_screw_2_camera"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"0 0 0 0 0 0 1 camera_bottom_screw_frame camera_link 100"</span> /&gt; <span class="nt">--</span><span class="o">&gt;</span>
+    &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"robot_description"</span> <span class="nb">command</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>find xacro<span class="si">)</span><span class="s2">/xacro '</span><span class="si">$(</span>find realsense2_description<span class="si">)</span><span class="s2">/urdf/test_d435_camera.urdf.xacro' use_nominal_extrinsics:=false"</span>/&gt;
+
+
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"fps"</span>                 <span class="nv">default</span><span class="o">=</span><span class="s2">"30"</span> /&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"width"</span>               <span class="nv">default</span><span class="o">=</span><span class="s2">"640"</span> /&gt;  &lt;<span class="o">!</span><span class="nt">--</span> 640 x 480  normal--&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"height"</span>              <span class="nv">default</span><span class="o">=</span><span class="s2">"480"</span> /&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_depth"</span>        <span class="nv">default</span><span class="o">=</span><span class="s2">"true"</span>/&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra1"</span>       <span class="nv">default</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra2"</span>       <span class="nv">default</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_color"</span>        <span class="nv">default</span><span class="o">=</span><span class="s2">"true"</span>/&gt;
+
+    &lt;include
+        <span class="nv">file</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>find realsense2_camera<span class="si">)</span><span class="s2">/launch/rs_camera.launch"</span><span class="o">&gt;</span>
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"depth_fps"</span>           <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg fps<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"infra_fps"</span>           <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg fps<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"color_fps"</span>           <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg fps<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_gyro"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_accel"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+        &lt;<span class="o">!</span><span class="nt">--</span> &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"filters"</span>             <span class="nv">value</span><span class="o">=</span><span class="s2">"pointcloud"</span>/&gt; <span class="nt">--</span><span class="o">&gt;</span>
+
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"depth_width"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg width<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"depth_height"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg height<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_depth"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_depth<span class="si">)</span><span class="s2">"</span>/&gt;
+
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"infra_width"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg width<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"infra_height"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg height<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra1"</span>       <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_infra1<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra2"</span>       <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_infra2<span class="si">)</span><span class="s2">"</span>/&gt;
+
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"color_width"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg width<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"color_height"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg height<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_color"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_color<span class="si">)</span><span class="s2">"</span>/&gt;
+
+    &lt;/include&gt; 
+
+&lt;/launch&gt;
+</code></pre></div></div>
+
+<ul>
+  <li>This will produce <code class="language-plaintext highlighter-rouge">/camera/depth/image_rect_raw</code>, <code class="language-plaintext highlighter-rouge">/camera/depth/camera_info</code>, <code class="language-plaintext highlighter-rouge">/camera/depth/color/points</code> topics which are fed to <code class="language-plaintext highlighter-rouge">point_cloud_xyz</code> nodelet (for downsampling and voxelizing) as</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"points_xyz"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"standalone rtabmap_util/point_cloud_xyz"</span><span class="o">&gt;</span>
+       &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"depth/image"</span>         <span class="nv">to</span><span class="o">=</span><span class="s2">"/camera/depth/image_rect_raw"</span>/&gt;
+       &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"depth/camera_info"</span>   <span class="nv">to</span><span class="o">=</span><span class="s2">"/camera/depth/camera_info"</span>/&gt;
+       &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"cloud"</span>               <span class="nv">to</span><span class="o">=</span><span class="s2">"/camera/depth/color/points"</span>/&gt;
+       &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"decimation"</span>  <span class="nb">type</span><span class="o">=</span><span class="s2">"double"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"4"</span>/&gt;
+       &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"voxel_size"</span>  <span class="nb">type</span><span class="o">=</span><span class="s2">"double"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"0.05"</span>/&gt;
+       &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"approx_sync"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"bool"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+    &lt;/node&gt;
+</code></pre></div></div>
+<ul>
+  <li>The above will publish downsampled and voxel filtered pointcloud under the topic <code class="language-plaintext highlighter-rouge">camera/depth/color/points</code></li>
+  <li>The cropping of the pointcloud is achieved by using the point cloud library’s (PCL) <a href="https://pointclouds.org/documentation/classpcl_1_1_crop_box_3_01pcl_1_1_p_c_l_point_cloud2_01_4.html">cropbox filter</a>. This would be as follows
+    <ul>
+      <li>subscribe to the pointcloud2 topic<code class="language-plaintext highlighter-rouge">camear/depth/color/points</code>
+        <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void FilterNearbyObstacles::pointcloudCallback<span class="o">(</span>const sensor_msgs::PointCloud2ConstPtr&amp; cloud_msg<span class="o">)</span>
+<span class="o">{</span>
+// Container <span class="k">for </span>original &amp; filtered data
+pcl::PCLPointCloud2<span class="k">*</span> cloud <span class="o">=</span> new pcl::PCLPointCloud2<span class="p">;</span>
+pcl::PCLPointCloud2ConstPtr cloudPtr<span class="o">(</span>cloud<span class="o">)</span><span class="p">;</span>
+
+// Convert to PCL data <span class="nb">type
+</span>pcl_conversions::toPCL<span class="o">(</span><span class="k">*</span>cloud_msg, <span class="k">*</span>cloud<span class="o">)</span><span class="p">;</span>
+
+pcl::PointCloud&lt;pcl::PointXYZ&gt;::Ptr croppedCloud <span class="o">(</span>new pcl::PointCloud&lt;pcl::PointXYZ&gt;<span class="o">)</span><span class="p">;</span>
+cropboxFilter<span class="o">(</span><span class="k">*</span>cloud, <span class="k">*</span>croppedCloud<span class="o">)</span><span class="p">;</span>
+
+// Convert to ROS data <span class="nb">type
+</span>sensor_msgs::PointCloud2 cropped_cloud<span class="p">;</span>
+pcl::toROSMsg<span class="o">(</span><span class="k">*</span>croppedCloud, cropped_cloud<span class="o">)</span><span class="p">;</span>
+// Publish the data
+croppedCloudPub_.publish<span class="o">(</span>cropped_cloud<span class="o">)</span><span class="p">;</span>
+<span class="o">}</span>
+
+void FilterNearbyObstacles::cropboxFilter<span class="o">(</span>const pcl::PCLPointCloud2 &amp; inCloud, pcl::PointCloud&lt;pcl::PointXYZ&gt; &amp; filteredCloud<span class="o">)</span>
+<span class="o">{</span>
+// https://stackoverflow.com/questions/45790828/remove-points-outside-defined-3d-box-inside-pcl-visualizer
+pcl::PointCloud&lt;pcl::PointXYZ&gt;::Ptr input_cloud<span class="o">(</span>new pcl::PointCloud&lt;pcl::PointXYZ&gt;<span class="o">)</span><span class="p">;</span>
+//    pcl::PointCloud&lt;pcl::PointXYZ&gt;::Ptr input_clou <span class="o">=</span> boost::make_shared&lt;pcl::PointCloud&lt;pcl::PointXYZ&gt;&gt;<span class="o">()</span><span class="p">;</span>
+pcl::fromPCLPointCloud2<span class="o">(</span>inCloud,<span class="k">*</span>input_cloud<span class="o">)</span><span class="p">;</span>
+
+pcl::CropBox&lt;pcl::PointXYZ&gt; boxFilter<span class="p">;</span>
+boxFilter.setMin<span class="o">(</span>Eigen::Vector4f<span class="o">(</span>x_min_, <span class="nt">-10</span>.0, z_min_, 1.0<span class="o">))</span><span class="p">;</span>
+boxFilter.setMax<span class="o">(</span>Eigen::Vector4f<span class="o">(</span>x_max_, 10.0, z_max_, 1.0<span class="o">))</span><span class="p">;</span>
+boxFilter.setInputCloud<span class="o">(</span>input_cloud<span class="o">)</span><span class="p">;</span>
+boxFilter.filter<span class="o">(</span>filteredCloud<span class="o">)</span><span class="p">;</span>
+<span class="o">}</span>
+</code></pre></div>        </div>
+        <p>where <code class="language-plaintext highlighter-rouge">x</code> and <code class="language-plaintext highlighter-rouge">z</code> are the dimensions of the box filter. This also publishes the box filtered pointcloud under the topic <code class="language-plaintext highlighter-rouge">/cropped_pointcloud</code>.</p>
+      </li>
+    </ul>
+  </li>
+  <li>The <code class="language-plaintext highlighter-rouge">/cropped_pointcloud</code> is then fed to the <code class="language-plaintext highlighter-rouge">obstacles_detection</code> nodelet as</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"rtabmap_obstacles_detection"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"standalone rtabmap_util/obstacles_detection stereo_nodelet"</span><span class="o">&gt;</span>
+        &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"cloud"</span> <span class="nv">to</span><span class="o">=</span><span class="s2">"/cropped_pointcloud"</span>/&gt;
+        &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"frame_id"</span>             <span class="nb">type</span><span class="o">=</span><span class="s2">"string"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"camera_link"</span>/&gt;
+        &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"wait_for_transform"</span>   <span class="nb">type</span><span class="o">=</span><span class="s2">"bool"</span>   <span class="nv">value</span><span class="o">=</span><span class="s2">"true"</span>/&gt;
+        &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"Grid/MaxGroundHeight"</span>   <span class="nb">type</span><span class="o">=</span><span class="s2">"double"</span>   <span class="nv">value</span><span class="o">=</span><span class="s2">"0.01"</span>/&gt;
+    &lt;/node&gt;
+</code></pre></div></div>
+<p>The above will produce obstacles under the topic <code class="language-plaintext highlighter-rouge">/obstacles</code> by segmenting out the ground</p>
+
+<h3 id="ros2-implementation">ROS2 Implementation</h3>
+<ul>
+  <li>Install <code class="language-plaintext highlighter-rouge">realsense</code> and <code class="language-plaintext highlighter-rouge">rtabmap-ros</code> as mentioned above.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">realsense</code> camera is launched as</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import os
+import launch
+import launch_ros.actions
+from launch.substitutions import Command
+from launch.actions import IncludeLaunchDescription
+from ament_index_python import get_package_share_directory
+from launch_ros.parameter_descriptions import ParameterValue
+from ament_index_python.packages import get_package_share_path
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
+
+def generate_launch_description<span class="o">()</span>:
+    robot_description <span class="o">=</span> ParameterValue<span class="o">(</span>
+        Command<span class="o">([</span><span class="s1">'xacro '</span>, str<span class="o">(</span>get_package_share_path<span class="o">(</span><span class="s1">'realsense2_description'</span><span class="o">)</span> / <span class="s1">'urdf/test_d435_camera.urdf.xacro'</span><span class="o">)])</span>,
+        <span class="nv">value_type</span><span class="o">=</span>str<span class="o">)</span>
+
+    rs_cam <span class="o">=</span> IncludeLaunchDescription<span class="o">(</span>
+        PythonLaunchDescriptionSource<span class="o">(</span>
+            os.path.join<span class="o">(</span>get_package_share_directory<span class="o">(</span><span class="s1">'realsense2_camera'</span><span class="o">)</span>, <span class="s1">'launch/rs_launch.py'</span><span class="o">))</span>,
+        <span class="nv">launch_arguments</span><span class="o">={</span>
+            <span class="s2">"depth_module.profile"</span>: <span class="s2">"640x480x30"</span>,
+           <span class="c"># "pointcloud.enable": "True",</span>
+        <span class="o">}</span>.items<span class="o">()</span>
+    <span class="o">)</span>
+
+    <span class="k">return </span>launch.LaunchDescription<span class="o">([</span>
+        rs_cam,
+        launch_ros.actions.Node<span class="o">(</span><span class="nv">package</span><span class="o">=</span><span class="s1">'robot_state_publisher'</span>, <span class="nv">executable</span><span class="o">=</span><span class="s1">'robot_state_publisher'</span>,
+                                <span class="nv">parameters</span><span class="o">=[{</span><span class="s1">'robot_description'</span>: robot_description<span class="o">}])</span>
+    <span class="o">])</span>
+</code></pre></div></div>
+
+<ul>
+  <li>The obstacle detection part is launched as a <a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html">ros2 component</a></li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s2">"""Launch a obstacle segmentation in a component container."""</span>
+
+import launch
+from launch_ros.descriptions import ComposableNode
+from launch_ros.actions import ComposableNodeContainer
+
+
+def generate_launch_description<span class="o">()</span>:
+    <span class="s2">"""Generate launch description with multiple components."""</span>
+    container <span class="o">=</span> ComposableNodeContainer<span class="o">(</span>
+        <span class="nv">name</span><span class="o">=</span><span class="s1">'obstacle_detection'</span>,
+        <span class="nv">namespace</span><span class="o">=</span><span class="s1">''</span>,
+        <span class="nv">package</span><span class="o">=</span><span class="s1">'rclcpp_components'</span>,
+        <span class="nv">executable</span><span class="o">=</span><span class="s1">'component_container'</span>,
+        <span class="nv">composable_node_descriptions</span><span class="o">=[</span>
+            ComposableNode<span class="o">(</span>
+                <span class="nv">package</span><span class="o">=</span><span class="s1">'rtabmap_util'</span>,
+                <span class="nv">plugin</span><span class="o">=</span><span class="s1">'rtabmap_util::PointCloudXYZ'</span>,
+                <span class="nv">name</span><span class="o">=</span><span class="s1">'points_xyz_rt'</span>,
+                <span class="nv">remappings</span><span class="o">=[</span>
+                            <span class="o">(</span><span class="s2">"depth/image"</span>, <span class="s2">"/camera/depth/image_rect_raw"</span><span class="o">)</span>,
+                            <span class="o">(</span><span class="s2">"depth/camera_info"</span>, <span class="s2">"/camera/depth/camera_info"</span><span class="o">)</span>,
+                            <span class="o">(</span><span class="s2">"cloud"</span>, <span class="s2">"/camera/depth/color/points"</span><span class="o">)</span>
+                            <span class="o">]</span>,
+                <span class="nv">parameters</span><span class="o">=[</span>
+                            <span class="o">{</span><span class="s2">"decimation"</span>: 4<span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"voxel_size"</span>: 0.05<span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"approx_sync"</span>: False<span class="o">}</span>
+                            <span class="o">]</span>
+                <span class="o">)</span>,
+            ComposableNode<span class="o">(</span>
+                <span class="nv">package</span><span class="o">=</span><span class="s1">'rtabmap_util'</span>,
+                <span class="nv">plugin</span><span class="o">=</span><span class="s1">'rtabmap_util::ObstaclesDetection'</span>,
+                <span class="nv">name</span><span class="o">=</span><span class="s1">'obstacle_detection_rt'</span>,
+                <span class="nv">remappings</span><span class="o">=[</span>
+                            <span class="o">(</span><span class="s2">"cloud"</span>, <span class="s2">"/cropped_pointcloud"</span><span class="o">)</span>
+                            <span class="o">]</span>,
+                <span class="nv">parameters</span><span class="o">=[</span>
+                            <span class="o">{</span><span class="s2">"frame_id"</span>: <span class="s2">"camera_link"</span><span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"wait_for_transform"</span>: 1.0<span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"Grid/MaxGroundHeight"</span>: <span class="s2">"0.04"</span><span class="o">}</span>
+                            <span class="o">]</span>
+                <span class="o">)</span>
+        <span class="o">]</span>,
+        <span class="nv">output</span><span class="o">=</span><span class="s1">'screen'</span>,
+    <span class="o">)</span>
+    <span class="k">return </span>launch.LaunchDescription<span class="o">([</span>container]<span class="o">)</span>
+</code></pre></div></div>
+<ul>
+  <li>Use the cropbox filter as above.</li>
+</ul>
+
+<p><strong>Notes</strong></p>
+<ul>
+  <li>Launching realsense camera with the launch_arguments <code class="language-plaintext highlighter-rouge">"pointcloud.enable": "True"</code> on raspberry pi will not publish pointclouds. This argument infact slows down the publishing rate of depth images from the specified rate of 30 to around 8 Hz. However if the <code class="language-plaintext highlighter-rouge">pointcloud.enable</code> argument is removed, then the rate of publishing of depth images is at the specified 30 Hz itself and by using either the <code class="language-plaintext highlighter-rouge">plugin='rtabmap_util::PointCloudXYZ'</code> or <a href="http://wiki.ros.org/depth_image_proc">depth_image_proc</a>, the pointclouds could be published at around the same 30 Hz rate.
+<br /></li>
+</ul>
+<div class="embed-container">
+  <iframe src="https://www.youtube.com/embed/90K8CWjifUs" width="775" height="480" frameborder="0" allowfullscreen="">
+  </iframe>
+</div>]]></content><author><name></name></author><category term="Computer-Vision" /><summary type="html"><![CDATA[realsense camera, crop box filter from PCL, ground segmentation]]></summary></entry><entry><title type="html">Inverse Kinematics Solutions: Analytic and Optimization Based Approaches</title><link href="https://ashbabu.github.io/blog/2022/Inverse_kinematics_solutions/" rel="alternate" type="text/html" title="Inverse Kinematics Solutions: Analytic and Optimization Based Approaches" /><published>2022-06-21T15:30:00+00:00</published><updated>2022-06-21T15:30:00+00:00</updated><id>https://ashbabu.github.io/blog/2022/Inverse_kinematics_solutions</id><content type="html" xml:base="https://ashbabu.github.io/blog/2022/Inverse_kinematics_solutions/"><![CDATA[<p>We have solved the symbolic <a href="/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/">forward kinematics</a> and generated the following expressions in one of the previous articles
+\begin{align}
+     x &amp;= 0.2\cos(q1) + 0.2\cos(q1 - q2) + 0.25\cos(q1 - q2 + q3) + 0.1415 \nonumber \newline
+     y &amp;= 0.2\sin(q1) + 0.2\sin(q1 - q2) + 0.25\sin(q1 - q2 + q3)  \nonumber
+\end{align}</p>
+
+<p>To solve these equations, I am gonna discuss two methods, viz. the analytic way which is faster but very difficult to generate equations for robots with several joints and the more general optimization based approach.</p>
+
+<h4 id="analytic-solution-of-ik">Analytic solution of IK</h4>
+<p>Let \(a1 = 0.2, a2 = 0.2, a3 = 0.25, a4 = 0.1415\)</p>
+
+\[(x - a4)^2 + y^2 = a1^2 + a2^2 + a3^2 + 2a1a2 \cos q2 + 2a2a3 \cos q3 +2a1a3 \cos(q2 - q3)\]
+
+<p>Let A \(= (x - a4)^2 + y^2 - a1^2 - a2^2 - a3^2 - 2a1a2 \cos q2\)</p>
+
+<p>B \(= 2a3 (a2\cos q3 + a1\cos(q2 - q3))\)
+\(= 2a3 (\cos q3 (a2+a1 \cos q2) + a1\sin q2 \sin q3)\)</p>
+
+<p>Mutiplying and diving the above by</p>
+
+<p>\(\sqrt{(a2+a1 \cos q2)^2 + (a1 \sin q2)^2} = \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}\), we get</p>
+
+<p>B \(= 2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2} (\cos q3 \sin \theta + \cos \theta \sin q3)\)
+\(= 2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2} \sin (\theta + q3)\)</p>
+
+<p>where \(\sin \theta = \frac{a2+a1 \cos q2}{\sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}},  \cos \theta = \frac{a1 \sin q2}{\sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}}\) and hence \(\tan \theta = \frac{a2+a1 \cos q2}{a1 \sin q2}\)</p>
+
+\[B = A\]
+
+\[2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2} \sin (\theta + q3) = A\]
+
+\[q3 + \theta = \arcsin( \frac{A}{2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}} )\]
+
+<p>Let \(\phi = \arcsin( \frac{A}{2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}} )\)</p>
+
+<p>The soultion then would be \(q3+\theta = (\phi + 2n\pi, (\pi - \phi) + 2n\pi)\) as \(\sin U = \sin (\pi-U)\) and n = 0, 1, 2….</p>
+
+<p>q3 becomes \(\phi + 2n\pi - \theta, (\pi - \phi) + 2n\pi - \theta\)</p>
+
+<p>For n = 0 and 1, the solution for q3 would be</p>
+
+\[\phi - \theta, \pi - \phi - \theta, 2\pi+\phi - \theta, 3\pi - \phi - \theta\]
+
+<p>The above is an expression for q3 in terms of q2. Similarly (without going into too much details), we can write</p>
+
+\[(x - a4 - a3 \cos (q1-q2+q3)^2 + (y - a1 \sin (q1-q2+q3))^2 = a1^2 + a2^2 + 2a1 a2 \cos q3\]
+
+\[\frac{x^2 + y^2 +a3^2 + a4^2 - a1^2 -a2^2 -2a1a2 \cos q2 - 2xa4}{2a3} =  \cos (q1-q2+q3) (x-a4) + y  \sin (q1-q2+q3)\]
+
+<p>From the above, \(q1-q2+q3 = \arcsin( \frac{K}{\sqrt{(x - a4)^2 + y^2}}) - \beta\)
+where \(K =  \frac{x^2 + y^2 +a3^2 + a4^2 - a1^2 -a2^2 -2a1a2 \cos q2 - 2xa4}{2a3}, \tan \beta = \frac{x - a4}{y}\) and (x, y) are the coordinates of the target.</p>
+
+<p>This is coded and is available <a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/analytic_ik.py">here</a></p>
+
+<h4 id="optimization-based-ik">Optimization based IK</h4>
+<p>A simple approach is adopted here to convey the idea. All optimization problems requires a cost function to minimize. We construct this as 
+\begin{align}
+     Min~ Z = (FK - Target)^2 = ((FK)_x - Target_x)^2 + ((FK)_y - Target_y)^2
+\end{align}
+where \(FK\) and \(Target\) respectively are the forward kinematics and the co-ordinates of the target vector in cartesian space. The \(FK\) implicitly encodes the joint values which could be found by algorithm like <code class="language-plaintext highlighter-rouge">BFGS</code>, <code class="language-plaintext highlighter-rouge">fmincon</code>, <code class="language-plaintext highlighter-rouge">SLSQP</code> etc. This is the general idea and there are several criteria that can be added to the optimization function to achieve other desirable effects like minimum joint rotations. Then the optimization function becomes
+\begin{align}
+     Min~ Z = (FK - Target)^2 + q1^2 + q2^2 + ….
+\end{align}</p>
+
+<p>The optimization procedure could be sped up by providing the <a href="/blog/2019/Jacobian/">jacobian</a> (gradient function) and the implementation of one such is provided in <a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/optim_ik.py">optim_ik</a>. The subject of optimization is very vast and the brief discussion provided here is probably not enough to understand the whole process and is beyond the scope of this article. Another use of optimization is <a href="/blog/2018/Camera-Calibration/">camera calibration</a>. It sounds very promising to find solutions using optimization but takes a bit of time and has the biggest problem of finding <a href="https://en.wikipedia.org/wiki/Maxima_and_minima">local minima</a>. The quality of the initial guess to start the optimization process decides where it’s going to end up and requires thorough knowledge to set things up. <a href="http://wiki.ros.org/kdl">KDL</a>, <a href="http://wiki.ros.org/trac_ik">Trac-ik</a> are examples of kinematics library which use optimization to solve the inverse kinematics problem.</p>]]></content><author><name></name></author><category term="Robotics" /><category term="Programming" /><summary type="html"><![CDATA[How to generate solve for forward kinematics]]></summary></entry><entry><title type="html">Generating Symbolic Expression for Forward Kinematics</title><link href="https://ashbabu.github.io/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/" rel="alternate" type="text/html" title="Generating Symbolic Expression for Forward Kinematics" /><published>2022-06-19T15:30:00+00:00</published><updated>2022-06-19T15:30:00+00:00</updated><id>https://ashbabu.github.io/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics</id><content type="html" xml:base="https://ashbabu.github.io/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/"><![CDATA[<p>The method that is going to be discussed here applies to simple manipulators. A more general form could be derived but the aim here is to understand the basics. The way <a href="https://www.ros.org/">ROS</a> understands the kind of robot that is being loaded into the <a href="http://wiki.ros.org/Parameter%20Server">parameter server</a> is through the <code class="language-plaintext highlighter-rouge">robot_description</code> tag which is basically an <code class="language-plaintext highlighter-rouge">xml</code> file more commonly known as <a href="http://wiki.ros.org/urdf/Tutorials">URDF</a>. The URDF file could be parsed to extract all the relevant parameters to compute the forward kinematics (Refer <a href="https://www.orocos.org/kdl.html">orocos kdl</a> for deeper understanding).</p>
+
+<p>Let’s take the case of a simple three degree of freedom planar manipulator. Refer to this <a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/forward_kinematics.py">python script</a> for the following discussion. Some of the things are hard coded as I am not doing any URDF parsing. Launch the simulation environment so that URDF is loaded into the parameter server. Send the robot to zero position (where all the joint values are zero).Then we need to know the link names as  described in the URDF (<code class="language-plaintext highlighter-rouge">self.links</code>). The <code class="language-plaintext highlighter-rouge">arm_base</code> to <code class="language-plaintext highlighter-rouge">arm_link_0</code> and <code class="language-plaintext highlighter-rouge">arm_link_3</code> to <code class="language-plaintext highlighter-rouge">arm_end_effector</code> are transformations where the rotations are constant (usually identity) and some fixed translation. Since we are considering a 3-DOF planar manipulator, we know that there are three joint space variable viz.,<code class="language-plaintext highlighter-rouge">q1</code>, <code class="language-plaintext highlighter-rouge">q2</code> and <code class="language-plaintext highlighter-rouge">q3</code>. The following table can be obtained by carefully observing the output produced by the <code class="language-plaintext highlighter-rouge">get_trans_rot()</code> function. It takes in a source and target frame and returns the translation, quaternion and the 4 x 4 transformation matrix between them.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Rotation<br />(Axis, Angle)</th>
+      <th>Translation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>arm_base to arm_link0</td>
+      <td>Identity</td>
+      <td>[0.02, 0.0, -0.0901]</td>
+    </tr>
+    <tr>
+      <td>arm_link0 to arm_link1</td>
+      <td>(Z, q1)</td>
+      <td>[0.1215, 0.0, -0.004]</td>
+    </tr>
+    <tr>
+      <td>arm_link1 to arm_link2</td>
+      <td>(Z, -q2)</td>
+      <td>[0.2, 0.0, 0.004]</td>
+    </tr>
+    <tr>
+      <td>arm_link2 to arm_link3</td>
+      <td>(Z, q3)</td>
+      <td>[0.2, 0.0, 0.0]</td>
+    </tr>
+    <tr>
+      <td>arm_link3 to arm_end_effector</td>
+      <td>Identity</td>
+      <td>[0.24, 0.0, 0.045]</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The symbolic forward kinematics is computed using <a href="https://www.sympy.org/en/index.html">sympy</a> and is referenced under the name <code class="language-plaintext highlighter-rouge">self.tfMat_abEff</code>. There is a helper function <code class="language-plaintext highlighter-rouge">forward_kinematics()</code> which simplifies this expression and returns the <code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">y</code> and <code class="language-plaintext highlighter-rouge">z</code> co-ordinates and the orientation of the end-effector with respect to the arm base (\(\phi\)). For the particular case of my robot, I got the equations as
+\begin{align}
+     x &amp;= 0.2\cos(q1) + 0.2\cos(q1 - q2) + 0.25\cos(q1 - q2 + q3) + 0.1415 \nonumber \newline
+     y &amp;= 0.2\sin(q1) + 0.2\sin(q1 - q2) + 0.25\sin(q1 - q2 + q3)  \nonumber
+\end{align}</p>]]></content><author><name></name></author><category term="Robotics" /><category term="Programming" /><summary type="html"><![CDATA[How to generate symbolic expression for forward kinematics]]></summary></entry><entry><title type="html">Custom Inverse Kinematics MoveIt Plugin</title><link href="https://ashbabu.github.io/blog/2022/Custom_Inverse_Kinematics_MoveIt_Plugin/" rel="alternate" type="text/html" title="Custom Inverse Kinematics MoveIt Plugin" /><published>2022-06-16T15:30:00+00:00</published><updated>2022-06-16T15:30:00+00:00</updated><id>https://ashbabu.github.io/blog/2022/Custom_Inverse_Kinematics_MoveIt_Plugin</id><content type="html" xml:base="https://ashbabu.github.io/blog/2022/Custom_Inverse_Kinematics_MoveIt_Plugin/"><![CDATA[<h3 id="introduction">Introduction</h3>
+
+<p>Solving inverse kinematics (IK) is a fundamental problem in robotics that converts task space co-ordinates to joint space variables. To solve for joint space values (<code class="language-plaintext highlighter-rouge">q's</code>) analytically, we require non-linear transcendental equations connecting the task-space and joint-space values or forward kinematic equations (Note that IK can be seen as a minimization problem as well). As a simple case to understand this, lets take the case of a single degree of freedom planar robot arm having a revolute joint. We can write the forward kinematics as
+\begin{align}
+    x = l * \cos(q) \nonumber \newline
+    y = l * \sin(q) \nonumber
+\end{align}
+where <code class="language-plaintext highlighter-rouge">l</code> and <code class="language-plaintext highlighter-rouge">q</code> are respectively the link length and the angle that the link makes with the fixed co-ordinate system. The inverse kinematics (given (x,y), what is the value of <code class="language-plaintext highlighter-rouge">q</code>?) can be written as</p>
+
+<p>\begin{align}
+    \tan (q) = \frac{y}{x} \implies q = \arctan(\frac{y}{x})
+    \label{eqn:pend_ik}
+\end{align}</p>
+
+<p>Equation \ref{eqn:pend_ik} is a very simple example of an analytic inverse kinematics solution. <a href="http://openrave.org/docs/0.8.2/openravepy/ikfast/">IKFast</a> is one such analytic IK solver for robot arms having any number of joints and is quite popular. However, it’s often difficult to set it up and there are a lot of “IKFast Not Working” queries if you do a google search.</p>
+
+<p>In <a href="https://www.ros.org/">ROS</a>, the most popular way of setting up a robot is using <a href="http://wiki.ros.org/urdf/Tutorials">URDF</a> and I will discuss another simple case of generating symbolic forward kinematics equations using <a href="https://www.sympy.org/en/index.html">sympy</a> in <a href="/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/">another post</a>. For now, I will assume that we already have an analytic expression for the IK.</p>
+
+<p>This article will discuss the various steps involved in creating a custom IK plugin to be used along with <a href="https://moveit.ros.org/">MoveIt</a>. (Why MoveIt because it is a very powerful and popular open source library for motion planning problems and is used by several robots). Firstly, we need to create a plugin using <a href="http://wiki.ros.org/pluginlib">pluginlib</a>, <a href="http://wiki.ros.org/pluginlib/Tutorials/Writing%20and%20Using%20a%20Simple%20Plugin">pluginlib_tutorials</a>. The KDL and SRV kinematics plugin <a href="https://moveit.ros.org/documentation/plugins/#kinematicsbase">documentation</a> give a very good idea of how to get started and set it up. I am just writing my experiences here for a quick overview of various things involved. So the steps involved are as follows</p>
+<ul>
+  <li>Open a terminal and <code class="language-plaintext highlighter-rouge">cd</code> to <code class="language-plaintext highlighter-rouge">catkin_ws/src</code> and
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>catkin_create_pkg moveit_kinematics_plugin roscpp rospy pluginlib moveit_core
+</code></pre></div>    </div>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">cd moveit_kinematics_plugin/include/moveit_kinematics_plugin</code> and create a <code class="language-plaintext highlighter-rouge">TestKinematicsPlugin.h</code>(<a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/include/moveit_kinematics_plugin/TestKinematicsPlugin.h">here</a>).</li>
+  <li>Most importatnly, this header file should inherit the <code class="language-plaintext highlighter-rouge">kinematics::KinematicsBase</code> and implement the pure virtual methods <code class="language-plaintext highlighter-rouge">getPositionFK()</code>, <code class="language-plaintext highlighter-rouge">getJointNames()</code>, <code class="language-plaintext highlighter-rouge">getLinkNames()</code>, the overloaded <code class="language-plaintext highlighter-rouge">getPositionIK()</code> and the <code class="language-plaintext highlighter-rouge">searchPositionIk()</code>. This also should have the <code class="language-plaintext highlighter-rouge">initialize()</code> method for initialization using the new syntax which takes the <code class="language-plaintext highlighter-rouge">robot_model</code> as the first argument instead of the deprecated <code class="language-plaintext highlighter-rouge">robot_description</code>.</li>
+  <li>I have added three other private functions, <code class="language-plaintext highlighter-rouge">getIKSolutions()</code>, <code class="language-plaintext highlighter-rouge">isSolutionValid()</code> and <code class="language-plaintext highlighter-rouge">getNearestSolutionToSeed()</code> for my specific case.</li>
+  <li><a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/src/TestKinematicsPlugin.cpp#L188">getIKSolutions()</a> implements the solution (for example equation \ref{eqn:pend_ik}). Something <strong>Important</strong> that I found here is that if you have two joint variables <code class="language-plaintext highlighter-rouge">q1</code> and <code class="language-plaintext highlighter-rouge">q2</code> which respectively being the first and second joints, the <code class="language-plaintext highlighter-rouge">solutions</code> vector should implement something like  <code class="language-plaintext highlighter-rouge">solutions.push_back({q2, q1})</code>. (Something to be investigated again)</li>
+  <li><code class="language-plaintext highlighter-rouge">isSolutionValid()</code> checks if the solution found is within the joint limits and <code class="language-plaintext highlighter-rouge">getNearestSolutionToSeed()</code> finds the solution that is closest to the seed state provided. This is implemented for my specific robot and may not be required in general.</li>
+  <li>The last but very important bit is the implementation of one of the overloaded <code class="language-plaintext highlighter-rouge">searchPositionIK()</code> method. I have numbered it as 4. Go through it and copy paste the function as such</li>
+  <li>The <code class="language-plaintext highlighter-rouge">solution_callback()</code> is provided to check if the configuration of the robot arm corresponding to the solution is collision free or not. This should be implemented for additional safety but the program would work even without this.</li>
+  <li>Add the following as well in the <code class="language-plaintext highlighter-rouge">TestKinematicsPlugin.cpp</code>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;class_loader/class_loader.hpp&gt;
+CLASS_LOADER_REGISTER_CLASS(moveit_kinematics_plugin::TestKinematicsPlugin, kinematics::KinematicsBase);
+</code></pre></div>    </div>
+  </li>
+  <li>Create a <code class="language-plaintext highlighter-rouge">plugin_description.xml</code> file in the same level as <code class="language-plaintext highlighter-rouge">src</code> that should look like</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version='1.0' encoding='UTF-8'?&gt;
+&lt;library path="lib/test_arm_moveit_plugin"&gt;
+  &lt;class base_class_type="kinematics::KinematicsBase" name="analytic/kinematicsPlugin" type="moveit_kinematics_plugin::TestArmKinematicsPlugin"&gt;
+    &lt;description&gt;MoveIt plugin for solving the kinematics analytically &lt;/description&gt;
+  &lt;/class&gt;
+&lt;/library&gt;
+</code></pre></div></div>
+<ul>
+  <li>Add an <code class="language-plaintext highlighter-rouge">export</code> tag in the <code class="language-plaintext highlighter-rouge">package.xml</code> and it should look like
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;export&gt;
+  &lt;moveit_core plugin="${prefix}/plugin_description.xml"/&gt;
+&lt;/export&gt;
+</code></pre></div>    </div>
+  </li>
+  <li>Copy the missing contents of the <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> into your <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> especially the <code class="language-plaintext highlighter-rouge">install</code> parts</li>
+  <li><code class="language-plaintext highlighter-rouge">cd</code> to your <code class="language-plaintext highlighter-rouge">catkin_ws</code> and do <code class="language-plaintext highlighter-rouge">catkin_make</code> and <code class="language-plaintext highlighter-rouge">source devel/setup.bash</code>.</li>
+  <li>When it finishes, you should see a <code class="language-plaintext highlighter-rouge">test_arm_moveit_plugin.so</code> (check the <code class="language-plaintext highlighter-rouge">plugin_description.xml</code> library path) generated under <code class="language-plaintext highlighter-rouge">catkin_ws/devel/lib</code>. It’s often in my case, the plugin is not regenerated if an IDE like CLion is used (dont know why!!). So make sure to check the time of generation of the <code class="language-plaintext highlighter-rouge">test_arm_moveit_plugin.so</code> by typing <code class="language-plaintext highlighter-rouge">ll devel/lib | grep test_arm</code>. This will give the time of the latest generation of the plugin. Or as a last resort, remove <code class="language-plaintext highlighter-rouge">build</code> and <code class="language-plaintext highlighter-rouge">devel</code> folders and rerun <code class="language-plaintext highlighter-rouge">catkin_make</code> if the plugin is not generated.</li>
+  <li>Additionally run <code class="language-plaintext highlighter-rouge">rospack plugins --attrib=plugin moveit_core</code> on your console. This should list the full path of <code class="language-plaintext highlighter-rouge">plugin_description.xml</code>.</li>
+  <li>Modify the <code class="language-plaintext highlighter-rouge">robot_moveit_config/config/kinematics.yaml</code> with the following
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>arm:
+  kinematics_solver: analytic/kinematicsPlugin
+</code></pre></div>    </div>
+    <p><strong>Note:</strong> The <code class="language-plaintext highlighter-rouge">robot_moveit_config</code> package is generated using <a href="http://docs.ros.org/en/melodic/api/moveit_tutorials/html/doc/setup_assistant/setup_assistant_tutorial.html?highlight=setup%20assistant">MoveIt Setup Assistant</a>.</p>
+  </li>
+</ul>
+
+<p>Congratulations, Your plugin is ready to be launched when you start your simulation</p>]]></content><author><name></name></author><category term="Robotics" /><category term="Programming" /><summary type="html"><![CDATA[How to make a Inverse Kinematics Plugin Compatable with MoveIt]]></summary></entry><entry><title type="html">Remote monitoring on a web browser</title><link href="https://ashbabu.github.io/blog/2022/ROS_WebClient/" rel="alternate" type="text/html" title="Remote monitoring on a web browser" /><published>2022-03-14T10:15:00+00:00</published><updated>2022-03-14T10:15:00+00:00</updated><id>https://ashbabu.github.io/blog/2022/ROS_WebClient</id><content type="html" xml:base="https://ashbabu.github.io/blog/2022/ROS_WebClient/"><![CDATA[<div style="text-align: justify">
+This article gives a brief explanation of how remote monitoring of robots integrated into <a href="https://www.ros.org/"> ROS </a>can be done in a web browser. Here I have integrated a live camera feed with robot states. Follow this <a href="https://wiki.ros.org/ros3djs/Tutorials/VisualizingAURDF"> tutorial </a> to get a feel of how this is done. In order for streaming live camera information, the images need to be compressed and republished. To solve some of the issues that may come up, this <a href="https://github.com/RobotWebTools/ros3djs/issues/209"> link </a> could be useful. A similar but another version of remote monitoring using a HoloLens is done in one of my <a href="/projects/ros-unity/"> projects </a>.
+</div>
+<p><br /></p>
+<div class="embed-container">
+  <iframe src="https://www.youtube.com/embed/dXEoPc54iKo" width="775" height="480" frameborder="0" allowfullscreen="">
+  </iframe>
+</div>
+
+<p><br /></p>
+
+<h3 id="resources">Resources</h3>
+<ul>
+  <li><a href="http://robotwebtools.org/">Robot Web Tools</a></li>
+  <li><a href="https://github.com/ashBabu/Utilities/wiki/Remote-Monitoring:-ROS-in-WebPage">My own collections</a></li>
+</ul>]]></content><author><name></name></author><category term="Robotics" /><category term="ROS" /><summary type="html"><![CDATA[A short intro on how to monitor robots on a browser]]></summary></entry><entry><title type="html">Part3: Developing a ROS C++ package</title><link href="https://ashbabu.github.io/blog/2022/3-Developing_ROS_Package/" rel="alternate" type="text/html" title="Part3: Developing a ROS C++ package" /><published>2022-01-07T15:30:00+00:00</published><updated>2022-01-07T15:30:00+00:00</updated><id>https://ashbabu.github.io/blog/2022/3:Developing_ROS_Package</id><content type="html" xml:base="https://ashbabu.github.io/blog/2022/3-Developing_ROS_Package/"><![CDATA[<h3 id="gtest-and-rostest"><em>gTest</em> and <em>rostest</em></h3>
+
+<p>We looked at <em>CMakeLists.txt</em> and <em>package.xml</em> in <a href="/blog/2021/2-Developing_ROS_Package/">Part2</a>. The aim here is to add simple tests to verify the functionality of each of the functions or modules that is added to the project. This will also ensure that the package is not broken by adding something new to the catkin package. At the end of the <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code>, add the following</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+if(CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+
+    add_rostest_gtest(
+        test_one
+        test/test_one.test
+        test/test_one.cpp
+    )
+    target_link_libraries(
+        test_one
+        ${catkin_LIBRARIES}
+    )
+    add_dependencies(
+        test_one
+        ${catkin_EXPORTED_TARGETS}
+    )
+
+    catkin_add_gtest(
+        test_two
+        test/test_two.cpp
+        src/hello.cpp
+        src/add.cpp
+    )
+    target_link_libraries(
+        test_two
+        ${catkin_LIBRARIES}
+    )
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">rostest</code> is basically the testing of your newly added function or module for compatibility with the ROS ecosystem. This is well documented <a href="http://wiki.ros.org/rostest">here</a>. Add a folder <code class="language-plaintext highlighter-rouge">test</code> in the same level as <code class="language-plaintext highlighter-rouge">include</code> (or <code class="language-plaintext highlighter-rouge">src</code>). <code class="language-plaintext highlighter-rouge">add_rostest_gtest()</code> is the function that enables testing which needs a name (<code class="language-plaintext highlighter-rouge">test_one</code>), a <code class="language-plaintext highlighter-rouge">.test</code> or <code class="language-plaintext highlighter-rouge">.launch</code> file and atleast one source file (<code class="language-plaintext highlighter-rouge">test_one.cpp</code>). The main difference between <code class="language-plaintext highlighter-rouge">rostest</code> and <code class="language-plaintext highlighter-rouge">gtest</code> is the lack of <code class="language-plaintext highlighter-rouge">.test</code> file. The <code class="language-plaintext highlighter-rouge">rostest</code> is invoked by using <code class="language-plaintext highlighter-rouge">rosrun package_name test_one.test</code> where the <code class="language-plaintext highlighter-rouge">test_one.test</code> would contain</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;launch&gt;
+    &lt;test pkg="package_name" test-name="test_one" type="test_one" /&gt;
+&lt;/launch&gt;
+
+</code></pre></div></div>
+<p>The structure of <code class="language-plaintext highlighter-rouge">test_one.cpp</code> would be</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;ros/ros.h&gt;
+#include &lt;gtest/gtest.h&gt;
+#include &lt;my_test_package/greet/hello.h&gt;
+
+TEST(TESTSuite, my_test1)
+{
+    ros::NodeHandle nh;
+    ros::AsyncSpinner spinner(1); spinner.start();
+
+    // define or find out a, b
+    EXPECT_EQ(a, b);
+
+    bool success = your_function();
+    EXPECT_TRUE(success);
+    std::cout&lt;&lt;" ::::::: "&lt;&lt;std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "moveit_ik_solutions");
+    testing::InitGoogleTest(&amp;argc, argv);
+    return RUN_ALL_TESTS();
+}
+</code></pre></div></div>
+
+<p>The functions <code class="language-plaintext highlighter-rouge">EXPECT_EQ</code> (for equality), <code class="language-plaintext highlighter-rouge">EXPECT_TRUE</code> (for boolean) are used to make sure if the test is run successfully or not. There are other functions as well which are well documented <a href="https://google.github.io/googletest/reference/assertions.html">here</a>. For diving deep, take a look at <a href="https://google.github.io/googletest/">Google Test</a></p>]]></content><author><name></name></author><category term="Robotics" /><category term="Programming" /><summary type="html"><![CDATA[How to make a ROS package]]></summary></entry><entry><title type="html">Part2: Developing a ROS C++ package</title><link href="https://ashbabu.github.io/blog/2021/2-Developing_ROS_Package/" rel="alternate" type="text/html" title="Part2: Developing a ROS C++ package" /><published>2021-12-07T15:30:00+00:00</published><updated>2021-12-07T15:30:00+00:00</updated><id>https://ashbabu.github.io/blog/2021/2:Developing_ROS_Package</id><content type="html" xml:base="https://ashbabu.github.io/blog/2021/2-Developing_ROS_Package/"><![CDATA[<h3 id="a-closer-look-at-cmakeliststxt-and-packagexml">A closer look at <em>CMakeLists.txt</em> and <em>package.xml</em></h3>
+
+<p>We looked at creating a catkin package in <a href="/blog/2021/1-Developing_ROS_Package/">Part1</a>. A catkin package is characterised by a <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> and a <code class="language-plaintext highlighter-rouge">package.xml</code>. Lets take a deeper look into the important parts of these. Only the main parts of <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> is shown below and this is in no way a complete tutorial to CMake. By default, <code class="language-plaintext highlighter-rouge">catkin_create_pkg</code> generates a long <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> with lots of comments for users to read and understand. The external settings that are used to create the package are listed under the <code class="language-plaintext highlighter-rouge">find_package()</code> tag. An excellent explanation to what <code class="language-plaintext highlighter-rouge">catkin_package()</code> is provided in <a href="https://answers.ros.org/question/58498/what-is-the-purpose-of-catkin_depends/">here</a>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake_minimum_required(VERSION 3.0.2)
+project(my_test_pkg)
+
+add_compile_options(-std=c++11)
+
+find_package(catkin REQUIRED COMPONENTS
+  moveit_core
+  roscpp
+  std_msgs
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+#  LIBRARIES my_test_pkg
+  CATKIN_DEPENDS moveit_core roscpp std_msgs
+#  DEPENDS system_lib
+)
+
+###########
+## Build ##
+###########
+
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+## Declare a C++ executable
+add_executable(${PROJECT_NAME} src/my_test_pkg.cpp)
+
+## Add cmake target dependencies of the executable
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+ )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+if(CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+
+    add_rostest_gtest(
+        test_one
+        test/test_one.test
+        test/test_one.cpp
+    )
+    target_link_libraries(
+        test_one
+        ${catkin_LIBRARIES}
+    )
+    add_dependencies(
+        test_one
+        ${catkin_EXPORTED_TARGETS}
+    )
+
+    catkin_add_gtest(
+        test_two
+        test/test_two.cpp
+        src/hello.cpp
+        src/add.cpp
+    )
+    target_link_libraries(
+        test_two
+        ${catkin_LIBRARIES}
+    )
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">include_directories()</code> contain the header files of the packages that you use in your project. If the project uses <a href="https://opencv.org/">OpenCV</a> as well, then this has to be added as</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+  ) 
+</code></pre></div></div>
+<p>Lets say we want to create two header files like <code class="language-plaintext highlighter-rouge">hello.h</code> and <code class="language-plaintext highlighter-rouge">add.h</code>, it would be a good practice to organize it as follows.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>my_test_pkg
+        |_ CMakeLists.txt
+        |_ package.xml
+        |_ src/
+        |_ include/
+              |_ my_test_pkg/
+                    |_ greet/
+                        |_ hello.h
+                    |_ math/
+                        |_ add.h
+</code></pre></div></div>
+<p>The header <code class="language-plaintext highlighter-rouge">hello.h</code> would be something like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#ifndef _HELLO_H_
+#define _HELLO_H_
+
+#include&lt;iostream&gt;
+#include&lt;string&gt;
+
+namespace greeting
+{
+class Hello
+{
+    public:
+        Hello(); // constructor
+        ~Hello();  // destructor
+        void printHello(const std::string &amp; str):
+    protected:
+        // protected attributes
+
+    private:
+        // private attributes
+};
+}
+#endif _HELLO_H_
+</code></pre></div></div>
+
+<p>Then similarly in the <code class="language-plaintext highlighter-rouge">src</code>, create two folders <code class="language-plaintext highlighter-rouge">greet</code> and <code class="language-plaintext highlighter-rouge">math</code> with the corresponding implementations (for example <code class="language-plaintext highlighter-rouge">hello.cpp</code> and <code class="language-plaintext highlighter-rouge">add.cpp</code>). The headers can then be used as <code class="language-plaintext highlighter-rouge">#include &lt;my_test_pkg/greet/hello.h&gt;</code> and <code class="language-plaintext highlighter-rouge">#include &lt;my_test_pkg/math/add.h&gt;</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">hello.cpp</code> would be like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;my_test_pkg/greet/hello.h&gt;
+
+using namespace greeting;
+
+Hello::Hello()
+{
+    std::cout&lt;&lt;"Hello Constructor Invoked"&lt;&lt; std::endl;
+}
+Hello::~Hello()
+{
+    std::cout&lt;&lt;"Hello Destructor Invoked"&lt;&lt; std::endl;
+}
+void Hello::printHello(const std::string &amp; str)
+{
+    std::cout&lt;&lt;" The string to print is " &lt;&lt; str &lt;&lt; std::endl;
+}
+</code></pre></div></div>
+<p>As you know that a C++ program allows only one <code class="language-plaintext highlighter-rouge">main()</code> function, we could take a look at how this is organised in the <code class="language-plaintext highlighter-rouge">src</code> directory.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>my_test_pkg
+        |_ CMakeLists.txt
+        |_ package.xml
+        |_ include/
+        |_ src/
+            |_ greet/
+                |_ hello.cpp
+            |_ math/
+                |_ add.cpp
+            |_ main.cpp
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">main.cpp</code> will look something like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;my_test_pkg/greet/hello.h&gt;
+#include&lt;my_test_pkg/math/add.h&gt;
+#include &lt;ros/ros.h&gt;
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "my_test_node");  // initiating a ros node
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
+
+    ros::Rate loop_rate(5);
+    int N[100] = {1, 2, 3 ....};
+    std::string myName = "JonDoe";
+
+    while (ros::ok())
+    {
+        // call your functions: as an example
+        printHello(myName);
+        addNumbers(N)
+        loop_rate.sleep();
+    }
+
+    spinner.stop();
+    return 0;
+//    // Wait for ROS threads to terminate
+//    ros::waitForShutdown();
+}
+</code></pre></div></div>
+<p>A little bit of ROS specific stuffs are involved but it should be quite straight forward.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">add_executable()</code> is where the whole executables are listed. In this particular case, it would be</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`add_executable( 
+    src/hello.cpp
+    src/add.cpp
+    src/main.cpp
+    )`
+</code></pre></div></div>
+<p>As the name goes, the  <code class="language-plaintext highlighter-rouge">add_dependencies()</code> help in adding the dependencies which is an essential part of your package. And finally the libraries are to be linked to your executable which is done using the</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>target_link_libraries(
+    ${PROJECT_NAME}
+    ${OpenCV_LIBS}
+    ${catkin_LIBRARIES}
+)
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">package.xml</code> should have the <code class="language-plaintext highlighter-rouge">build_depend</code> and <code class="language-plaintext highlighter-rouge">exec_depend</code> tags for all those listed under the <code class="language-plaintext highlighter-rouge">find_package()</code>. For a deeper understanding, have a look at <a href="http://wiki.ros.org/catkin/package.xml">here</a>.</p>
+
+<p>In no way, this article is a complete with respect to learning ROS CPP but I hope this would give a good enough start point. We will look at adding <code class="language-plaintext highlighter-rouge">gtest()</code> and <code class="language-plaintext highlighter-rouge">rostest()</code> in the next <a href="/blog/2022/3-Developing_ROS_Package/">article</a>.</p>]]></content><author><name></name></author><category term="Robotics" /><category term="Programming" /><summary type="html"><![CDATA[How to make a ROS package]]></summary></entry></feed>

@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Part4: Supervised Learning: Weighted regression</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="Building blocks of supervised learning" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2020/4-supervised_learning-weighted/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,49 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Part4: Supervised Learning: Weighted regression</h1>
+    <p class="post-meta">April 11, 2020</p>
+    <p class="post-tags">
+      <a href="/blog/2020"> <i class="fas fa-calendar fa-sm"></i> 2020 </a>
+        ·  
+        <a href="/blog/category/Machine-Learning">
+          <i class="fas fa-tag fa-sm"></i> Machine-Learning</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <!-- <div style="text-align: justify"> <a href="https://www.ros.org/"> ROS </a> -->
+<p><!-- </div> -->
+<code class="language-plaintext highlighter-rouge">What happens if the data is non-linear?</code></p>
+
+<!-- \section{Locally weighted linear regression} -->
+<p>If the data points are non-linear in nature, performing a linear regression does not make sense. When we require the output(<strong>Y</strong>) at a particular input point (\(X^*\)), a linear regression in the neighbourhood of \(X^*\) would be more accurate than performing a regression all through the data points. For this, a weighting function, <code class="language-plaintext highlighter-rouge">v</code> is defined as</p>
+
+<p>\begin{align}
+    v_i(X^*) = \exp{\frac{(X^* - X)^2}{2h}}
+\end{align}
+where \(h\) decides the width of the gaussian and is chosen manually from test data. The new loss function would become
+\begin{align}
+    L(X^*) &amp;= \sum_i (X_iw - Y_i)^2 ~v_i(X^*) + \lambda w^Tw \nonumber \newline
+    L(X^*) &amp;= \sum_i (\hat{X}\hat{w} - Y)^T V (\hat{X}\hat{w} - Y) + \lambda w^Tw 
+    \label{eqn:lossfunLWLR}
+\end{align}
+And the solution would be</p>
+
+<p>\begin{align}
+    w(X^*) = (X^TV + \lambda I)^{-1} X^T VY
+\end{align}</p>
+
+  </article>
+
+</div>
 
     </div>
 

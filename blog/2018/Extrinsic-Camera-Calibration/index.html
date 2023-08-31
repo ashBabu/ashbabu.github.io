@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Extrinsic Camera Calibration Using Optimization</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="How to calibrate a camera with respect to robot's base" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2018/Extrinsic-Camera-Calibration/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,57 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Extrinsic Camera Calibration Using Optimization</h1>
+    <p class="post-meta">October 8, 2018</p>
+    <p class="post-tags">
+      <a href="/blog/2018"> <i class="fas fa-calendar fa-sm"></i> 2018 </a>
+        ·  
+        <a href="/blog/category/Computer-Vision">
+          <i class="fas fa-tag fa-sm"></i> Computer-Vision</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <h2 id="theory">Theory</h2>
+
+<p><img style="float: left;" title="Camera calibration" src="/assets/img/cam_calib.png" alt="Camera Calibration" width="750" height="400"></p>
+
+<p>Figure shows the schematic of the robot where <code class="language-plaintext highlighter-rouge">B</code>, <code class="language-plaintext highlighter-rouge">EE</code> and <code class="language-plaintext highlighter-rouge">C</code> represent the base frame (or fixed frame) of the robot, end-effector frame and camera frame respectively. <code class="language-plaintext highlighter-rouge">M</code> corresponds to the origin of the marker (april-tags) which is along the Z axis of the <code class="language-plaintext highlighter-rouge">EE</code> frame. We know the translation vector, \(^Bt_{EE}\), from the <code class="language-plaintext highlighter-rouge">tf</code> topic from the robot. The attachment fitted with the <code class="language-plaintext highlighter-rouge">EE</code> is made in SolidWorks and hence the translation,\(^{EE}t_M\) is also known. From the detection algorithm running, we get the translation, \(^Ct_M\). From all these known information, we can write</p>
+
+<p>\begin{equation}
+ ^Bt_{EE} + ^B[R]_{EE} ~^{EE}t_M  = ^Bt_C + ^B[R]_C ~^Ct_M
+ \end{equation}</p>
+
+<p>where \(^B[R]_{EE}\) and \(^B[R]_C\) are the 3 x 3 rotation matrices relating the base to end-effector and base to camera co-ordinate systems. The left hand side of the equation is fully known and it is required to find the unknowns in \(^Bt_C\) and \(^B[R]_C\). Since \(^B[R]_C\) is a rotation matrix, it follows the following (orthogonal matrix)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>* the dot product of each of the columns should be zero
+* the sum of the squares of the elements in each column should be 1
+</code></pre></div></div>
+
+<p>Then formulate an constrained optimization problem which is to minimize the error</p>
+
+<p>\begin{equation}
+   Min~ Z = \sum_{i=1}^{n} (X_i - ^Bt_C - ^B[R]_C ~^C{t_M}_i)^2
+\end{equation}</p>
+
+<p>For detailed info regarding how to formulate an constrained optimization is available <a href="https://docs.scipy.org/doc/scipy/reference/optimize.html" target="_blank" rel="noopener noreferrer">here</a>. Checkout the <code class="language-plaintext highlighter-rouge">SLSQP</code> method in particular.</p>
+
+<h2 id="other-resources">Other Resources</h2>
+<p>*. <a href="https://www.youtube.com/watch?v=xQ79ysnrzUk" target="_blank" rel="noopener noreferrer">Youtube: MoveIt - Easy Hand Eye Calibration with MoveIt</a><br>
+*. <a href="https://ros-planning.github.io/moveit_tutorials/doc/hand_eye_calibration/hand_eye_calibration_tutorial.html" target="_blank" rel="noopener noreferrer">Hand-Eye Calibration: MoveIt Tutorials</a><br>
+*. <a href="http://wiki.ros.org/camera_calibration" target="_blank" rel="noopener noreferrer">ROS camera_calibration package</a><br>
+*. <a href="https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html" target="_blank" rel="noopener noreferrer">OpenCV camera calibration tutorial</a></p>
+
+  </article>
+
+</div>
 
     </div>
 

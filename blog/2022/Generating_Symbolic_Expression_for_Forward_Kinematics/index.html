@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Generating Symbolic Expression for Forward Kinematics</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="How to generate symbolic expression for forward kinematics" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,76 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Generating Symbolic Expression for Forward Kinematics</h1>
+    <p class="post-meta">June 19, 2022</p>
+    <p class="post-tags">
+      <a href="/blog/2022"> <i class="fas fa-calendar fa-sm"></i> 2022 </a>
+        ·  
+        <a href="/blog/category/Robotics">
+          <i class="fas fa-tag fa-sm"></i> Robotics</a>  
+          <a href="/blog/category/Programming">
+          <i class="fas fa-tag fa-sm"></i> Programming</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <p>The method that is going to be discussed here applies to simple manipulators. A more general form could be derived but the aim here is to understand the basics. The way <a href="https://www.ros.org/" target="_blank" rel="noopener noreferrer">ROS</a> understands the kind of robot that is being loaded into the <a href="http://wiki.ros.org/Parameter%20Server" target="_blank" rel="noopener noreferrer">parameter server</a> is through the <code class="language-plaintext highlighter-rouge">robot_description</code> tag which is basically an <code class="language-plaintext highlighter-rouge">xml</code> file more commonly known as <a href="http://wiki.ros.org/urdf/Tutorials" target="_blank" rel="noopener noreferrer">URDF</a>. The URDF file could be parsed to extract all the relevant parameters to compute the forward kinematics (Refer <a href="https://www.orocos.org/kdl.html" target="_blank" rel="noopener noreferrer">orocos kdl</a> for deeper understanding).</p>
+
+<p>Let’s take the case of a simple three degree of freedom planar manipulator. Refer to this <a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/forward_kinematics.py" target="_blank" rel="noopener noreferrer">python script</a> for the following discussion. Some of the things are hard coded as I am not doing any URDF parsing. Launch the simulation environment so that URDF is loaded into the parameter server. Send the robot to zero position (where all the joint values are zero).Then we need to know the link names as  described in the URDF (<code class="language-plaintext highlighter-rouge">self.links</code>). The <code class="language-plaintext highlighter-rouge">arm_base</code> to <code class="language-plaintext highlighter-rouge">arm_link_0</code> and <code class="language-plaintext highlighter-rouge">arm_link_3</code> to <code class="language-plaintext highlighter-rouge">arm_end_effector</code> are transformations where the rotations are constant (usually identity) and some fixed translation. Since we are considering a 3-DOF planar manipulator, we know that there are three joint space variable viz.,<code class="language-plaintext highlighter-rouge">q1</code>, <code class="language-plaintext highlighter-rouge">q2</code> and <code class="language-plaintext highlighter-rouge">q3</code>. The following table can be obtained by carefully observing the output produced by the <code class="language-plaintext highlighter-rouge">get_trans_rot()</code> function. It takes in a source and target frame and returns the translation, quaternion and the 4 x 4 transformation matrix between them.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Rotation<br>(Axis, Angle)</th>
+      <th>Translation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>arm_base to arm_link0</td>
+      <td>Identity</td>
+      <td>[0.02, 0.0, -0.0901]</td>
+    </tr>
+    <tr>
+      <td>arm_link0 to arm_link1</td>
+      <td>(Z, q1)</td>
+      <td>[0.1215, 0.0, -0.004]</td>
+    </tr>
+    <tr>
+      <td>arm_link1 to arm_link2</td>
+      <td>(Z, -q2)</td>
+      <td>[0.2, 0.0, 0.004]</td>
+    </tr>
+    <tr>
+      <td>arm_link2 to arm_link3</td>
+      <td>(Z, q3)</td>
+      <td>[0.2, 0.0, 0.0]</td>
+    </tr>
+    <tr>
+      <td>arm_link3 to arm_end_effector</td>
+      <td>Identity</td>
+      <td>[0.24, 0.0, 0.045]</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The symbolic forward kinematics is computed using <a href="https://www.sympy.org/en/index.html" target="_blank" rel="noopener noreferrer">sympy</a> and is referenced under the name <code class="language-plaintext highlighter-rouge">self.tfMat_abEff</code>. There is a helper function <code class="language-plaintext highlighter-rouge">forward_kinematics()</code> which simplifies this expression and returns the <code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">y</code> and <code class="language-plaintext highlighter-rouge">z</code> co-ordinates and the orientation of the end-effector with respect to the arm base (\(\phi\)). For the particular case of my robot, I got the equations as
+\begin{align}
+     x &amp;= 0.2\cos(q1) + 0.2\cos(q1 - q2) + 0.25\cos(q1 - q2 + q3) + 0.1415 \nonumber \newline
+     y &amp;= 0.2\sin(q1) + 0.2\sin(q1 - q2) + 0.25\sin(q1 - q2 + q3)  \nonumber
+\end{align}</p>
+
+  </article>
+
+</div>
 
     </div>
 

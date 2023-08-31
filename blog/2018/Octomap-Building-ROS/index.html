@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Octomap building in ROS</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="Voxel based Octomap for scene segmentation" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2018/Octomap-Building-ROS/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,91 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Octomap building in ROS</h1>
+    <p class="post-meta">September 22, 2018</p>
+    <p class="post-tags">
+      <a href="/blog/2018"> <i class="fas fa-calendar fa-sm"></i> 2018 </a>
+        ·  
+        <a href="/blog/category/Computer-Vision">
+          <i class="fas fa-tag fa-sm"></i> Computer-Vision</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <h3 id="pre-requisites">Pre-requisites</h3>
+<p><code class="language-plaintext highlighter-rouge">sudo apt-get install ros-melodic-octomap ros-melodic-octomap-msgs ros-melodic-octomap-ros ros-melodic-octomap-rviz-plugins ros-melodic-octomap-server ros-melodic-octomap-mapping ros-melodic-freenect-launch libfreenect-dev</code></p>
+
+<h3 id="instructions-for-cloning-and-building-optional">Instructions for cloning and building (Optional)</h3>
+<p>Octomap_server is used to generate and save octomaps as .bt (binary) or .ot (oct-tree) files.</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cd catkin_ws/src</code></li>
+  <li><code class="language-plaintext highlighter-rouge">git clone https://github.com/OctoMap/octomap_mapping</code></li>
+  <li><code class="language-plaintext highlighter-rouge">git clone https://github.com/code-iai/iai_kinect2</code></li>
+  <li><code class="language-plaintext highlighter-rouge">catkin_make</code></li>
+</ul>
+
+<p>create a catkin package</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cd src/</code></li>
+  <li><code class="language-plaintext highlighter-rouge">catkin_create_pkg cameras roscpp rospy std_msgs</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cd ..</code></li>
+  <li><code class="language-plaintext highlighter-rouge">catkin_make</code></li>
+</ul>
+
+<p>and add the following launch file, <code class="language-plaintext highlighter-rouge">start_cameras.launch</code> inside a launch folder</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;launch&gt;
+  
+     &lt;include <span class="nv">file</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>find kinect2_bridge<span class="si">)</span><span class="s2">/launch/kinect2_bridge.launch"</span><span class="o">&gt;</span>
+       &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"base_name"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"ceiling_camera"</span>/&gt;
+       &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"sensor"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"002608570547"</span> /&gt;  &lt;<span class="o">!</span><span class="nt">--</span> Replace this line with your camera serial number <span class="nt">--</span><span class="o">&gt;</span>
+       &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"fps_limit"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"15"</span> /&gt;
+       &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"publish_tf"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"true"</span> /&gt;
+       &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"base_name_tf"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"ceiling_camera"</span> /&gt;
+     &lt;<span class="o">!</span><span class="nt">--</span>  &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"output_frame"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"ceil"</span> /&gt;   <span class="nt">--</span><span class="o">&gt;</span>
+     &lt;/include&gt;
+
+&lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"tf"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"static_transform_publisher"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"ceiling_cam_transform"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"
+-0.12019394, -0.04154276,  1.53544738  0.64843474, -0.64567785,  0.28140082, -0.28887035 /world /ceiling_camera_link 100"</span>/&gt;  
+
+&lt;/launch&gt;
+</code></pre></div></div>
+
+<p>The procedures for building an octmap for visualization in <code class="language-plaintext highlighter-rouge">Rviz</code> are follows:</p>
+
+<ol>
+  <li>
+<code class="language-plaintext highlighter-rouge">roslaunch camera_setup start_cameras.launch</code>  # to launch the kinect 3D sensor</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">roslaunch octomap_server octomap_mapping.launch</code> # 2 things need to be changed 1) frame_id   2) remap cloud_in. check the forked octomap_mapping.launch <a href="https://github.com/ashBabu/panda_moveit_config_ash/blob/master/launch/demo_promp.launch#L32" target="_blank" rel="noopener noreferrer">here</a>
+</li>
+  <li><code class="language-plaintext highlighter-rouge">rosrun rviz rviz</code></li>
+  <li>Add <code class="language-plaintext highlighter-rouge">MarkerArray</code> in <code class="language-plaintext highlighter-rouge">Rviz</code> and select the topic as <code class="language-plaintext highlighter-rouge">/occupied_cells_vis_array</code>. Set the same frame_id above (in 2) in the Global option –&gt; Fixed frame in <code class="language-plaintext highlighter-rouge">Rviz</code>
+</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">rosrun octomap_server octomap_saver -f map_name.bt (or .ot)</code> # to save the octomap</li>
+</ol>
+
+<h3 id="visualize-octomap-in-rviz">Visualize octomap in <code class="language-plaintext highlighter-rouge">Rviz</code>
+</h3>
+<ol>
+  <li>Close all the above</li>
+  <li><code class="language-plaintext highlighter-rouge">roscore</code></li>
+  <li><code class="language-plaintext highlighter-rouge">rosrun rviz rviz</code></li>
+  <li><code class="language-plaintext highlighter-rouge">rosrun octomap_server octomap_server_node map_name.bt</code></li>
+  <li>Add <code class="language-plaintext highlighter-rouge">MarkerArray</code> in <code class="language-plaintext highlighter-rouge">Rviz</code> and select the topic as <code class="language-plaintext highlighter-rouge">/occupied_cells_vis_array</code>. Set the same frame_id as it was recorded in the Global option –&gt; Fixed frame in Rviz. There might be a chance that the octomap wont show up. Then write frame id as <code class="language-plaintext highlighter-rouge">map</code> which should solve the problem</li>
+</ol>
+
+  </article>
+
+</div>
 
     </div>
 

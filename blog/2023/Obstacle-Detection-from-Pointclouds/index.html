@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <!-- Head -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
+    
+
+    <!-- Standard metadata -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ashith Shyam Babu, PhD | Obstacle Detection from Pointclouds on Raspberry Pi</title>
+    <meta name="author" content="Ashith Shyam Babu, PhD" />
+    <meta name="description" content="realsense camera, crop box filter from PCL, ground segmentation" />
+    <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
+
+
+    <!-- Bootstrap & MDB -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-DF7Zhf293AJxJNTmh5zhoYYIMs2oXitRfBjY+9L//AY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous" />
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.1/css/academicons.min.css" integrity="sha256-i1+4qU2G2860dGGIOJscdC30s9beBXjFfzjWLjBRsBg=" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons">
+
+    <!-- Code Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/.css" media="none" id="highlight_theme_light" />
+
+    <!-- Styles -->
+    
+    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+    
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2023/Obstacle-Detection-from-Pointclouds/">
+    
+    <!-- Dark Mode -->
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/.css" media="none" id="highlight_theme_dark" />
+
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/dark_mode.js"></script>
+    
+
+  </head>
+
+  <!-- Body -->
+  <body class="fixed-top-nav ">
+
+    <!-- Header -->
+    <header>
+
+      <!-- Nav Bar -->
+      <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top">
+        <div class="container">
+          <a class="navbar-brand title font-weight-lighter" href="https://ashbabu.github.io/"><span class="font-weight-bold">Ashith</span> Shyam  Babu, PhD</a>
+          <!-- Navbar Toggle -->
+          <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar top-bar"></span>
+            <span class="icon-bar middle-bar"></span>
+            <span class="icon-bar bottom-bar"></span>
+          </button>
+
+          <div class="collapse navbar-collapse text-right" id="navbarNav">
+            <ul class="navbar-nav ml-auto flex-nowrap">
+
+              <!-- About -->
+              <li class="nav-item ">
+                <a class="nav-link" href="/">about</a>
+              </li>
+              
+
+              <!-- Other pages -->
+              <li class="nav-item dropdown ">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">blog</a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="/blog/category/robotics/">Robotics</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/programming/">Programming</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/computer-vision/">Computer Vision</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/reinforcement-learning/">Reinforcement Learning</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/machine-learning/">Machine Learning</a>
+                </div>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/contact/">contact</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/projects/">projects</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/publications/">publications</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/teaching/">teaching</a>
+              </li>
+
+              <!-- Toogle theme mode -->
+              <div class="toggle-container">
+                <a id="light-toggle">
+                  <i class="fas fa-moon"></i>
+                  <i class="fas fa-sun"></i>
+                </a>
+              </div>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Content -->
+    <div class="container mt-5">
+      <!-- _layouts/post.html -->
+
+<div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Obstacle Detection from Pointclouds on Raspberry Pi</h1>
+    <p class="post-meta">May 13, 2023</p>
+    <p class="post-tags">
+      <a href="/blog/2023"> <i class="fas fa-calendar fa-sm"></i> 2023 </a>
+        ·  
+        <a href="/blog/category/Computer-Vision">
+          <i class="fas fa-tag fa-sm"></i> Computer-Vision</a>  
+          
+
+    </p>
+  </header>
+
+  <article class="post-content">
+    <p>The aim here is to detect obstacles using stereo cameras which are just in front of the camera by segmenting the pointclouds into ground and the rest as obstacles. I am using intel realsense d435i for this task. The implementation can be done in <code class="language-plaintext highlighter-rouge">ROS</code> or <code class="language-plaintext highlighter-rouge">ROS2</code>. This is done on a Ubuntu linux system.</p>
+
+<h3 id="pre-requisites">Pre-requisites</h3>
+<ul>
+  <li>Method 1:
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">sudo apt-get install ros-$ROS_DISTRO-realsense2*</code> would install both <code class="language-plaintext highlighter-rouge">librealsense</code> and <code class="language-plaintext highlighter-rouge">realsense-ros</code>
+</li>
+    </ul>
+  </li>
+  <li>Method 2: For some reason, if the above dont work
+    <ul>
+      <li>Install the librealsense library on Raspberry Pi by following this <a href="/blog/2021/Intel-realsense-cam-on-RaspberryPi/">link</a>
+</li>
+      <li>Install the realsense <a href="https://github.com/IntelRealSense/realsense-ros/releases/tag/2.3.2" target="_blank" rel="noopener noreferrer">ROS Wrapper</a>
+</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">sudo apt install ros-$ROS_DISTRO-rtabmap-ros</code></li>
+</ul>
+
+<p>The above would install all the required packages for ROS or ROS2.</p>
+
+<h3 id="ros1-specific-implementation">ROS1 specific implementation</h3>
+<ul>
+  <li>Launch the realsense camera as follows</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;launch&gt;
+   &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"tf"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"static_transform_publisher"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"base_2_camera"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"0 0 0 0 0 0 1 base_link camera_link 100"</span> /&gt;
+    &lt;<span class="o">!</span><span class="nt">--</span>     &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"tf"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"static_transform_publisher"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"cam_screw_2_camera"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"0 0 0 0 0 0 1 camera_bottom_screw_frame camera_link 100"</span> /&gt; <span class="nt">--</span><span class="o">&gt;</span>
+    &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"robot_description"</span> <span class="nb">command</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>find xacro<span class="si">)</span><span class="s2">/xacro '</span><span class="si">$(</span>find realsense2_description<span class="si">)</span><span class="s2">/urdf/test_d435_camera.urdf.xacro' use_nominal_extrinsics:=false"</span>/&gt;
+
+
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"fps"</span>                 <span class="nv">default</span><span class="o">=</span><span class="s2">"30"</span> /&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"width"</span>               <span class="nv">default</span><span class="o">=</span><span class="s2">"640"</span> /&gt;  &lt;<span class="o">!</span><span class="nt">--</span> 640 x 480  normal--&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"height"</span>              <span class="nv">default</span><span class="o">=</span><span class="s2">"480"</span> /&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_depth"</span>        <span class="nv">default</span><span class="o">=</span><span class="s2">"true"</span>/&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra1"</span>       <span class="nv">default</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra2"</span>       <span class="nv">default</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+    &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_color"</span>        <span class="nv">default</span><span class="o">=</span><span class="s2">"true"</span>/&gt;
+
+    &lt;include
+        <span class="nv">file</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>find realsense2_camera<span class="si">)</span><span class="s2">/launch/rs_camera.launch"</span><span class="o">&gt;</span>
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"depth_fps"</span>           <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg fps<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"infra_fps"</span>           <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg fps<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"color_fps"</span>           <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg fps<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_gyro"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_accel"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+        &lt;<span class="o">!</span><span class="nt">--</span> &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"filters"</span>             <span class="nv">value</span><span class="o">=</span><span class="s2">"pointcloud"</span>/&gt; <span class="nt">--</span><span class="o">&gt;</span>
+
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"depth_width"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg width<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"depth_height"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg height<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_depth"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_depth<span class="si">)</span><span class="s2">"</span>/&gt;
+
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"infra_width"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg width<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"infra_height"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg height<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra1"</span>       <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_infra1<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_infra2"</span>       <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_infra2<span class="si">)</span><span class="s2">"</span>/&gt;
+
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"color_width"</span>         <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg width<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"color_height"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg height<span class="si">)</span><span class="s2">"</span>/&gt;
+        &lt;arg <span class="nv">name</span><span class="o">=</span><span class="s2">"enable_color"</span>        <span class="nv">value</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>arg enable_color<span class="si">)</span><span class="s2">"</span>/&gt;
+
+    &lt;/include&gt; 
+
+&lt;/launch&gt;
+</code></pre></div></div>
+
+<ul>
+  <li>This will produce <code class="language-plaintext highlighter-rouge">/camera/depth/image_rect_raw</code>, <code class="language-plaintext highlighter-rouge">/camera/depth/camera_info</code>, <code class="language-plaintext highlighter-rouge">/camera/depth/color/points</code> topics which are fed to <code class="language-plaintext highlighter-rouge">point_cloud_xyz</code> nodelet (for downsampling and voxelizing) as</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"points_xyz"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"standalone rtabmap_util/point_cloud_xyz"</span><span class="o">&gt;</span>
+       &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"depth/image"</span>         <span class="nv">to</span><span class="o">=</span><span class="s2">"/camera/depth/image_rect_raw"</span>/&gt;
+       &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"depth/camera_info"</span>   <span class="nv">to</span><span class="o">=</span><span class="s2">"/camera/depth/camera_info"</span>/&gt;
+       &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"cloud"</span>               <span class="nv">to</span><span class="o">=</span><span class="s2">"/camera/depth/color/points"</span>/&gt;
+       &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"decimation"</span>  <span class="nb">type</span><span class="o">=</span><span class="s2">"double"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"4"</span>/&gt;
+       &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"voxel_size"</span>  <span class="nb">type</span><span class="o">=</span><span class="s2">"double"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"0.05"</span>/&gt;
+       &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"approx_sync"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"bool"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"false"</span>/&gt;
+    &lt;/node&gt;
+</code></pre></div></div>
+<ul>
+  <li>The above will publish downsampled and voxel filtered pointcloud under the topic <code class="language-plaintext highlighter-rouge">camera/depth/color/points</code>
+</li>
+  <li>The cropping of the pointcloud is achieved by using the point cloud library’s (PCL) <a href="https://pointclouds.org/documentation/classpcl_1_1_crop_box_3_01pcl_1_1_p_c_l_point_cloud2_01_4.html" target="_blank" rel="noopener noreferrer">cropbox filter</a>. This would be as follows
+    <ul>
+      <li>subscribe to the pointcloud2 topic<code class="language-plaintext highlighter-rouge">camear/depth/color/points</code>
+        <div class="language-bash highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>void FilterNearbyObstacles::pointcloudCallback<span class="o">(</span>const sensor_msgs::PointCloud2ConstPtr&amp; cloud_msg<span class="o">)</span>
+<span class="o">{</span>
+// Container <span class="k">for </span>original &amp; filtered data
+pcl::PCLPointCloud2<span class="k">*</span> cloud <span class="o">=</span> new pcl::PCLPointCloud2<span class="p">;</span>
+pcl::PCLPointCloud2ConstPtr cloudPtr<span class="o">(</span>cloud<span class="o">)</span><span class="p">;</span>
+
+// Convert to PCL data <span class="nb">type
+</span>pcl_conversions::toPCL<span class="o">(</span><span class="k">*</span>cloud_msg, <span class="k">*</span>cloud<span class="o">)</span><span class="p">;</span>
+
+pcl::PointCloud&lt;pcl::PointXYZ&gt;::Ptr croppedCloud <span class="o">(</span>new pcl::PointCloud&lt;pcl::PointXYZ&gt;<span class="o">)</span><span class="p">;</span>
+cropboxFilter<span class="o">(</span><span class="k">*</span>cloud, <span class="k">*</span>croppedCloud<span class="o">)</span><span class="p">;</span>
+
+// Convert to ROS data <span class="nb">type
+</span>sensor_msgs::PointCloud2 cropped_cloud<span class="p">;</span>
+pcl::toROSMsg<span class="o">(</span><span class="k">*</span>croppedCloud, cropped_cloud<span class="o">)</span><span class="p">;</span>
+// Publish the data
+croppedCloudPub_.publish<span class="o">(</span>cropped_cloud<span class="o">)</span><span class="p">;</span>
+<span class="o">}</span>
+
+void FilterNearbyObstacles::cropboxFilter<span class="o">(</span>const pcl::PCLPointCloud2 &amp; inCloud, pcl::PointCloud&lt;pcl::PointXYZ&gt; &amp; filteredCloud<span class="o">)</span>
+<span class="o">{</span>
+// https://stackoverflow.com/questions/45790828/remove-points-outside-defined-3d-box-inside-pcl-visualizer
+pcl::PointCloud&lt;pcl::PointXYZ&gt;::Ptr input_cloud<span class="o">(</span>new pcl::PointCloud&lt;pcl::PointXYZ&gt;<span class="o">)</span><span class="p">;</span>
+//    pcl::PointCloud&lt;pcl::PointXYZ&gt;::Ptr input_clou <span class="o">=</span> boost::make_shared&lt;pcl::PointCloud&lt;pcl::PointXYZ&gt;&gt;<span class="o">()</span><span class="p">;</span>
+pcl::fromPCLPointCloud2<span class="o">(</span>inCloud,<span class="k">*</span>input_cloud<span class="o">)</span><span class="p">;</span>
+
+pcl::CropBox&lt;pcl::PointXYZ&gt; boxFilter<span class="p">;</span>
+boxFilter.setMin<span class="o">(</span>Eigen::Vector4f<span class="o">(</span>x_min_, <span class="nt">-10</span>.0, z_min_, 1.0<span class="o">))</span><span class="p">;</span>
+boxFilter.setMax<span class="o">(</span>Eigen::Vector4f<span class="o">(</span>x_max_, 10.0, z_max_, 1.0<span class="o">))</span><span class="p">;</span>
+boxFilter.setInputCloud<span class="o">(</span>input_cloud<span class="o">)</span><span class="p">;</span>
+boxFilter.filter<span class="o">(</span>filteredCloud<span class="o">)</span><span class="p">;</span>
+<span class="o">}</span>
+</code></pre></div>        </div>
+        <p>where <code class="language-plaintext highlighter-rouge">x</code> and <code class="language-plaintext highlighter-rouge">z</code> are the dimensions of the box filter. This also publishes the box filtered pointcloud under the topic <code class="language-plaintext highlighter-rouge">/cropped_pointcloud</code>.</p>
+      </li>
+    </ul>
+  </li>
+  <li>The <code class="language-plaintext highlighter-rouge">/cropped_pointcloud</code> is then fed to the <code class="language-plaintext highlighter-rouge">obstacles_detection</code> nodelet as</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> &lt;node <span class="nv">pkg</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"nodelet"</span> <span class="nv">name</span><span class="o">=</span><span class="s2">"rtabmap_obstacles_detection"</span> <span class="nv">args</span><span class="o">=</span><span class="s2">"standalone rtabmap_util/obstacles_detection stereo_nodelet"</span><span class="o">&gt;</span>
+        &lt;remap <span class="nv">from</span><span class="o">=</span><span class="s2">"cloud"</span> <span class="nv">to</span><span class="o">=</span><span class="s2">"/cropped_pointcloud"</span>/&gt;
+        &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"frame_id"</span>             <span class="nb">type</span><span class="o">=</span><span class="s2">"string"</span> <span class="nv">value</span><span class="o">=</span><span class="s2">"camera_link"</span>/&gt;
+        &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"wait_for_transform"</span>   <span class="nb">type</span><span class="o">=</span><span class="s2">"bool"</span>   <span class="nv">value</span><span class="o">=</span><span class="s2">"true"</span>/&gt;
+        &lt;param <span class="nv">name</span><span class="o">=</span><span class="s2">"Grid/MaxGroundHeight"</span>   <span class="nb">type</span><span class="o">=</span><span class="s2">"double"</span>   <span class="nv">value</span><span class="o">=</span><span class="s2">"0.01"</span>/&gt;
+    &lt;/node&gt;
+</code></pre></div></div>
+<p>The above will produce obstacles under the topic <code class="language-plaintext highlighter-rouge">/obstacles</code> by segmenting out the ground</p>
+
+<h3 id="ros2-implementation">ROS2 Implementation</h3>
+<ul>
+  <li>Install <code class="language-plaintext highlighter-rouge">realsense</code> and <code class="language-plaintext highlighter-rouge">rtabmap-ros</code> as mentioned above.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">realsense</code> camera is launched as</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import os
+import launch
+import launch_ros.actions
+from launch.substitutions import Command
+from launch.actions import IncludeLaunchDescription
+from ament_index_python import get_package_share_directory
+from launch_ros.parameter_descriptions import ParameterValue
+from ament_index_python.packages import get_package_share_path
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
+
+def generate_launch_description<span class="o">()</span>:
+    robot_description <span class="o">=</span> ParameterValue<span class="o">(</span>
+        Command<span class="o">([</span><span class="s1">'xacro '</span>, str<span class="o">(</span>get_package_share_path<span class="o">(</span><span class="s1">'realsense2_description'</span><span class="o">)</span> / <span class="s1">'urdf/test_d435_camera.urdf.xacro'</span><span class="o">)])</span>,
+        <span class="nv">value_type</span><span class="o">=</span>str<span class="o">)</span>
+
+    rs_cam <span class="o">=</span> IncludeLaunchDescription<span class="o">(</span>
+        PythonLaunchDescriptionSource<span class="o">(</span>
+            os.path.join<span class="o">(</span>get_package_share_directory<span class="o">(</span><span class="s1">'realsense2_camera'</span><span class="o">)</span>, <span class="s1">'launch/rs_launch.py'</span><span class="o">))</span>,
+        <span class="nv">launch_arguments</span><span class="o">={</span>
+            <span class="s2">"depth_module.profile"</span>: <span class="s2">"640x480x30"</span>,
+           <span class="c"># "pointcloud.enable": "True",</span>
+        <span class="o">}</span>.items<span class="o">()</span>
+    <span class="o">)</span>
+
+    <span class="k">return </span>launch.LaunchDescription<span class="o">([</span>
+        rs_cam,
+        launch_ros.actions.Node<span class="o">(</span><span class="nv">package</span><span class="o">=</span><span class="s1">'robot_state_publisher'</span>, <span class="nv">executable</span><span class="o">=</span><span class="s1">'robot_state_publisher'</span>,
+                                <span class="nv">parameters</span><span class="o">=[{</span><span class="s1">'robot_description'</span>: robot_description<span class="o">}])</span>
+    <span class="o">])</span>
+</code></pre></div></div>
+
+<ul>
+  <li>The obstacle detection part is launched as a <a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html" target="_blank" rel="noopener noreferrer">ros2 component</a>
+</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s2">"""Launch a obstacle segmentation in a component container."""</span>
+
+import launch
+from launch_ros.descriptions import ComposableNode
+from launch_ros.actions import ComposableNodeContainer
+
+
+def generate_launch_description<span class="o">()</span>:
+    <span class="s2">"""Generate launch description with multiple components."""</span>
+    container <span class="o">=</span> ComposableNodeContainer<span class="o">(</span>
+        <span class="nv">name</span><span class="o">=</span><span class="s1">'obstacle_detection'</span>,
+        <span class="nv">namespace</span><span class="o">=</span><span class="s1">''</span>,
+        <span class="nv">package</span><span class="o">=</span><span class="s1">'rclcpp_components'</span>,
+        <span class="nv">executable</span><span class="o">=</span><span class="s1">'component_container'</span>,
+        <span class="nv">composable_node_descriptions</span><span class="o">=[</span>
+            ComposableNode<span class="o">(</span>
+                <span class="nv">package</span><span class="o">=</span><span class="s1">'rtabmap_util'</span>,
+                <span class="nv">plugin</span><span class="o">=</span><span class="s1">'rtabmap_util::PointCloudXYZ'</span>,
+                <span class="nv">name</span><span class="o">=</span><span class="s1">'points_xyz_rt'</span>,
+                <span class="nv">remappings</span><span class="o">=[</span>
+                            <span class="o">(</span><span class="s2">"depth/image"</span>, <span class="s2">"/camera/depth/image_rect_raw"</span><span class="o">)</span>,
+                            <span class="o">(</span><span class="s2">"depth/camera_info"</span>, <span class="s2">"/camera/depth/camera_info"</span><span class="o">)</span>,
+                            <span class="o">(</span><span class="s2">"cloud"</span>, <span class="s2">"/camera/depth/color/points"</span><span class="o">)</span>
+                            <span class="o">]</span>,
+                <span class="nv">parameters</span><span class="o">=[</span>
+                            <span class="o">{</span><span class="s2">"decimation"</span>: 4<span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"voxel_size"</span>: 0.05<span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"approx_sync"</span>: False<span class="o">}</span>
+                            <span class="o">]</span>
+                <span class="o">)</span>,
+            ComposableNode<span class="o">(</span>
+                <span class="nv">package</span><span class="o">=</span><span class="s1">'rtabmap_util'</span>,
+                <span class="nv">plugin</span><span class="o">=</span><span class="s1">'rtabmap_util::ObstaclesDetection'</span>,
+                <span class="nv">name</span><span class="o">=</span><span class="s1">'obstacle_detection_rt'</span>,
+                <span class="nv">remappings</span><span class="o">=[</span>
+                            <span class="o">(</span><span class="s2">"cloud"</span>, <span class="s2">"/cropped_pointcloud"</span><span class="o">)</span>
+                            <span class="o">]</span>,
+                <span class="nv">parameters</span><span class="o">=[</span>
+                            <span class="o">{</span><span class="s2">"frame_id"</span>: <span class="s2">"camera_link"</span><span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"wait_for_transform"</span>: 1.0<span class="o">}</span>,
+                            <span class="o">{</span><span class="s2">"Grid/MaxGroundHeight"</span>: <span class="s2">"0.04"</span><span class="o">}</span>
+                            <span class="o">]</span>
+                <span class="o">)</span>
+        <span class="o">]</span>,
+        <span class="nv">output</span><span class="o">=</span><span class="s1">'screen'</span>,
+    <span class="o">)</span>
+    <span class="k">return </span>launch.LaunchDescription<span class="o">([</span>container]<span class="o">)</span>
+</code></pre></div></div>
+<ul>
+  <li>Use the cropbox filter as above.</li>
+</ul>
+
+<p><strong>Notes</strong></p>
+<ul>
+  <li>Launching realsense camera with the launch_arguments <code class="language-plaintext highlighter-rouge">"pointcloud.enable": "True"</code> on raspberry pi will not publish pointclouds. This argument infact slows down the publishing rate of depth images from the specified rate of 30 to around 8 Hz. However if the <code class="language-plaintext highlighter-rouge">pointcloud.enable</code> argument is removed, then the rate of publishing of depth images is at the specified 30 Hz itself and by using either the <code class="language-plaintext highlighter-rouge">plugin='rtabmap_util::PointCloudXYZ'</code> or <a href="http://wiki.ros.org/depth_image_proc" target="_blank" rel="noopener noreferrer">depth_image_proc</a>, the pointclouds could be published at around the same 30 Hz rate.
+<br>
+</li>
+</ul>
+<div class="embed-container">
+  <iframe src="https://www.youtube.com/embed/90K8CWjifUs" width="775" height="480" frameborder="0" allowfullscreen="">
+  </iframe>
+</div>
+
+
+  </article>
+
+</div>
+
+    </div>
+
+    <!-- Footer -->    
+    <footer class="fixed-bottom">
+      <div class="container mt-0">
+        © Copyright 2023 Ashith Shyam Babu, PhD. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="noopener noreferrer">Jekyll</a>. Hosted by <a href="https://pages.github.com/" target="_blank" rel="noopener noreferrer">GitHub Pages</a>.
+
+      </div>
+    </footer>
+
+    <!-- JavaScripts -->
+    <!-- jQuery -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <!-- Bootsrap & MDB scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.2/dist/umd/popper.min.js" integrity="sha256-l/1pMF/+J4TThfgARS6KwWrk/egwuVvhRzfLAMQ6Ds4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.min.js" integrity="sha256-SyTu6CwrfOhaznYZPoolVw2rxoY7lKYKQvqbtqN93HI=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script>
+
+    <!-- Masonry & imagesLoaded -->
+  <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
+  <script defer src="/assets/js/masonry.js" type="text/javascript"></script>
+    
+  <!-- Medium Zoom JS -->
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
+  <script src="/assets/js/zoom.js"></script><!-- Load Common JS -->
+  <script src="/assets/js/common.js"></script>
+
+    <!-- MathJax -->
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        tags: 'ams'
+      }
+    };
+  </script>
+  <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+  </body>
+</html>
+

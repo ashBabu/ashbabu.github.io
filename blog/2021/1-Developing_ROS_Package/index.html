@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Part1: Developing a ROS C++ package</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="How to make a ROS package" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2021/1-Developing_ROS_Package/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,74 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Part1: Developing a ROS C++ package</h1>
+    <p class="post-meta">November 6, 2021</p>
+    <p class="post-tags">
+      <a href="/blog/2021"> <i class="fas fa-calendar fa-sm"></i> 2021 </a>
+        ·  
+        <a href="/blog/category/Robotics">
+          <i class="fas fa-tag fa-sm"></i> Robotics</a>  
+          <a href="/blog/category/Programming">
+          <i class="fas fa-tag fa-sm"></i> Programming</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <h3 id="introduction">Introduction</h3>
+
+<p>This introduces the various stages of developing a simple Robot Operating System (ROS) package in Linux. The main aim is to focus on some good practices that are required to make a ROS compatible package. Open up the terminal and type the following</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">mkdir -p ~/catkin_ws/src</code>    ## This will simply create two folders <code class="language-plaintext highlighter-rouge">src</code> inside <code class="language-plaintext highlighter-rouge">catkin_ws</code>
+</li>
+  <li><code class="language-plaintext highlighter-rouge">cd ~/catkin_ws/src</code></li>
+  <li><code class="language-plaintext highlighter-rouge">catkin_create_pkg my_test_package roscpp std_msgs moveit_core</code></li>
+</ul>
+
+<p>The <code class="language-plaintext highlighter-rouge">catkin_create_pkg</code> has to be understood careflly. The first argument is the name of the package (<code class="language-plaintext highlighter-rouge">my_test_package</code>) and the rest are dependencies <a href="http://wiki.ros.org/roscpp" target="_blank" rel="noopener noreferrer">roscpp</a>, <a href="http://wiki.ros.org/std_msgs" target="_blank" rel="noopener noreferrer">std_msgs</a> and <a href="https://moveit.ros.org/" target="_blank" rel="noopener noreferrer">moveit</a>. Each package would have its own dependencies and could be different. After executing the above three lines, the <code class="language-plaintext highlighter-rouge">src</code> folder would have two other important files viz., <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> and <a href="http://wiki.ros.org/catkin/package.xml" target="_blank" rel="noopener noreferrer">package.xml</a>. For the time being, lets leave both these as it is but it would be interesting to take a look at both these files and how ROS has organized our dependencies (<code class="language-plaintext highlighter-rouge">roscpp, std_msgs, moveit_core</code>) in it. The final step is to do the following</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cd ~/catkin_ws</code></li>
+  <li><code class="language-plaintext highlighter-rouge">catkin_make</code></li>
+</ul>
+
+<p>The <code class="language-plaintext highlighter-rouge">catkin_make</code> is equivalent to</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cd ~/catkin_ws</code></li>
+  <li><code class="language-plaintext highlighter-rouge">mkdir build</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cd build</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cmake ../src -DCMAKE_INSTALL_PREFIX=../install -DCATKIN_DEVEL_PREFIX=../devel</code></li>
+  <li><code class="language-plaintext highlighter-rouge">make</code></li>
+</ul>
+
+<p>At this stage the folder structure would be</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>catkin_ws
+    |_ build/
+    |_ deve/l
+    |_ src/
+        |_ CMakeLists.txt
+        |_ my_test_pkg/
+                |_ CMakeLists.txt
+                |_ package.xml
+                |_ src/
+                |_ include/
+                      |_ my_test_pkg/
+
+</code></pre></div></div>
+<p>We will organize and add our c++ header files in <code class="language-plaintext highlighter-rouge">include/my_test_package</code> and all c++ source files in <code class="language-plaintext highlighter-rouge">src</code>. Go to <a href="/blog/2021/2-Developing_ROS_Package/">Part 2</a> for more exciting stuffs.</p>
+
+  </article>
+
+</div>
 
     </div>
 

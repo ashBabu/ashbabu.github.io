@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Inverse Kinematics Solutions: Analytic and Optimization Based Approaches</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="How to generate solve for forward kinematics" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2022/Inverse_kinematics_solutions/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,95 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Inverse Kinematics Solutions: Analytic and Optimization Based Approaches</h1>
+    <p class="post-meta">June 21, 2022</p>
+    <p class="post-tags">
+      <a href="/blog/2022"> <i class="fas fa-calendar fa-sm"></i> 2022 </a>
+        ·  
+        <a href="/blog/category/Robotics">
+          <i class="fas fa-tag fa-sm"></i> Robotics</a>  
+          <a href="/blog/category/Programming">
+          <i class="fas fa-tag fa-sm"></i> Programming</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <p>We have solved the symbolic <a href="/blog/2022/Generating_Symbolic_Expression_for_Forward_Kinematics/">forward kinematics</a> and generated the following expressions in one of the previous articles
+\begin{align}
+     x &amp;= 0.2\cos(q1) + 0.2\cos(q1 - q2) + 0.25\cos(q1 - q2 + q3) + 0.1415 \nonumber \newline
+     y &amp;= 0.2\sin(q1) + 0.2\sin(q1 - q2) + 0.25\sin(q1 - q2 + q3)  \nonumber
+\end{align}</p>
+
+<p>To solve these equations, I am gonna discuss two methods, viz. the analytic way which is faster but very difficult to generate equations for robots with several joints and the more general optimization based approach.</p>
+
+<h4 id="analytic-solution-of-ik">Analytic solution of IK</h4>
+<p>Let \(a1 = 0.2, a2 = 0.2, a3 = 0.25, a4 = 0.1415\)</p>
+
+\[(x - a4)^2 + y^2 = a1^2 + a2^2 + a3^2 + 2a1a2 \cos q2 + 2a2a3 \cos q3 +2a1a3 \cos(q2 - q3)\]
+
+<p>Let A \(= (x - a4)^2 + y^2 - a1^2 - a2^2 - a3^2 - 2a1a2 \cos q2\)</p>
+
+<p>B \(= 2a3 (a2\cos q3 + a1\cos(q2 - q3))\)
+\(= 2a3 (\cos q3 (a2+a1 \cos q2) + a1\sin q2 \sin q3)\)</p>
+
+<p>Mutiplying and diving the above by</p>
+
+<p>\(\sqrt{(a2+a1 \cos q2)^2 + (a1 \sin q2)^2} = \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}\), we get</p>
+
+<p>B \(= 2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2} (\cos q3 \sin \theta + \cos \theta \sin q3)\)
+\(= 2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2} \sin (\theta + q3)\)</p>
+
+<p>where \(\sin \theta = \frac{a2+a1 \cos q2}{\sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}},  \cos \theta = \frac{a1 \sin q2}{\sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}}\) and hence \(\tan \theta = \frac{a2+a1 \cos q2}{a1 \sin q2}\)</p>
+
+\[B = A\]
+
+\[2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2} \sin (\theta + q3) = A\]
+
+\[q3 + \theta = \arcsin( \frac{A}{2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}} )\]
+
+<p>Let \(\phi = \arcsin( \frac{A}{2a3 \times \sqrt{a1^2 + a2^2 + 2a1a2 \cos q2}} )\)</p>
+
+<p>The soultion then would be \(q3+\theta = (\phi + 2n\pi, (\pi - \phi) + 2n\pi)\) as \(\sin U = \sin (\pi-U)\) and n = 0, 1, 2….</p>
+
+<p>q3 becomes \(\phi + 2n\pi - \theta, (\pi - \phi) + 2n\pi - \theta\)</p>
+
+<p>For n = 0 and 1, the solution for q3 would be</p>
+
+\[\phi - \theta, \pi - \phi - \theta, 2\pi+\phi - \theta, 3\pi - \phi - \theta\]
+
+<p>The above is an expression for q3 in terms of q2. Similarly (without going into too much details), we can write</p>
+
+\[(x - a4 - a3 \cos (q1-q2+q3)^2 + (y - a1 \sin (q1-q2+q3))^2 = a1^2 + a2^2 + 2a1 a2 \cos q3\]
+
+\[\frac{x^2 + y^2 +a3^2 + a4^2 - a1^2 -a2^2 -2a1a2 \cos q2 - 2xa4}{2a3} =  \cos (q1-q2+q3) (x-a4) + y  \sin (q1-q2+q3)\]
+
+<p>From the above, \(q1-q2+q3 = \arcsin( \frac{K}{\sqrt{(x - a4)^2 + y^2}}) - \beta\)
+where \(K =  \frac{x^2 + y^2 +a3^2 + a4^2 - a1^2 -a2^2 -2a1a2 \cos q2 - 2xa4}{2a3}, \tan \beta = \frac{x - a4}{y}\) and (x, y) are the coordinates of the target.</p>
+
+<p>This is coded and is available <a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/analytic_ik.py" target="_blank" rel="noopener noreferrer">here</a></p>
+
+<h4 id="optimization-based-ik">Optimization based IK</h4>
+<p>A simple approach is adopted here to convey the idea. All optimization problems requires a cost function to minimize. We construct this as 
+\begin{align}
+     Min~ Z = (FK - Target)^2 = ((FK)_x - Target_x)^2 + ((FK)_y - Target_y)^2
+\end{align}
+where \(FK\) and \(Target\) respectively are the forward kinematics and the co-ordinates of the target vector in cartesian space. The \(FK\) implicitly encodes the joint values which could be found by algorithm like <code class="language-plaintext highlighter-rouge">BFGS</code>, <code class="language-plaintext highlighter-rouge">fmincon</code>, <code class="language-plaintext highlighter-rouge">SLSQP</code> etc. This is the general idea and there are several criteria that can be added to the optimization function to achieve other desirable effects like minimum joint rotations. Then the optimization function becomes
+\begin{align}
+     Min~ Z = (FK - Target)^2 + q1^2 + q2^2 + ….
+\end{align}</p>
+
+<p>The optimization procedure could be sped up by providing the <a href="/blog/2019/Jacobian/">jacobian</a> (gradient function) and the implementation of one such is provided in <a href="https://github.com/ashBabu/moveit_kinematics_plugin/blob/master/scripts/optim_ik.py" target="_blank" rel="noopener noreferrer">optim_ik</a>. The subject of optimization is very vast and the brief discussion provided here is probably not enough to understand the whole process and is beyond the scope of this article. Another use of optimization is <a href="/blog/2018/Camera-Calibration/">camera calibration</a>. It sounds very promising to find solutions using optimization but takes a bit of time and has the biggest problem of finding <a href="https://en.wikipedia.org/wiki/Maxima_and_minima" target="_blank" rel="noopener noreferrer">local minima</a>. The quality of the initial guess to start the optimization process decides where it’s going to end up and requires thorough knowledge to set things up. <a href="http://wiki.ros.org/kdl" target="_blank" rel="noopener noreferrer">KDL</a>, <a href="http://wiki.ros.org/trac_ik" target="_blank" rel="noopener noreferrer">Trac-ik</a> are examples of kinematics library which use optimization to solve the inverse kinematics problem.</p>
+
+  </article>
+
+</div>
 
     </div>
 

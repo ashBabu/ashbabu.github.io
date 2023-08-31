@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Jacobian</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="What does the term Jacobian Matrix mean" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2019/Jacobian/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,87 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Jacobian</h1>
+    <p class="post-meta">May 8, 2019</p>
+    <p class="post-tags">
+      <a href="/blog/2019"> <i class="fas fa-calendar fa-sm"></i> 2019 </a>
+        ·  
+        <a href="/blog/category/Robotics">
+          <i class="fas fa-tag fa-sm"></i> Robotics</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <!-- /*<div style="text-align: justify"> */ -->
+<p>Most text books provide a mathematical definition for the Jacobian. But I wonder if anyone understands what it really means? <br></p>
+
+<p>Most of the robots have either revolute or prismatic joints or a combinations of both. Mathematically Jacobian is represented as 
+<!-- </div> -->
+\begin{equation}
+   v_e = J \dot{q}
+\end{equation}</p>
+
+<p>where \(v_e, ~\dot{q}\) and \(J\)  are respectively the velocity of the end-effector (<code class="language-plaintext highlighter-rouge"> a vector of dimension 6 x 1</code>), velocity of the joints (<code class="language-plaintext highlighter-rouge">of dimension n x 1</code>) and Jacobian (<code class="language-plaintext highlighter-rouge">of dimension 6 x n</code>). Imagine a human arm and when the elbow joint is moved (keeping all other joints fixed), the fingers of our hand starts moving (or in more general the <code class="language-plaintext highlighter-rouge">end-effector</code> for a robot). If this process is repeated for other joints, it can be seen that each joint contributes a certain amount to the velocity of the <code class="language-plaintext highlighter-rouge">end-effector</code>. Jacobian quantifies each of these contributions in the form of a matrix and is dependant on the current joint position (<code class="language-plaintext highlighter-rouge">q</code>). It is easy to derive the Jacobian for a simple case to understand this idea.</p>
+<figure>
+
+  <picture>
+    <source media="(max-width: 480px)" srcset="/assets/img/robotics/jacobian-480.webp"></source>
+    <source media="(max-width: 800px)" srcset="/assets/img/robotics/jacobian-800.webp"></source>
+    <source media="(max-width: 1400px)" srcset="/assets/img/robotics/jacobian-1400.webp"></source>
+    <!-- Fallback to the original file -->
+    <img class="img-fluid rounded z-depth-1" src="/assets/img/robotics/jacobian.png" data-zoomable="">
+
+  </picture>
+
+</figure>
+
+<p>The end-effector co-ordinates can be found out as
+\begin{align}
+   x &amp;= l_1 \cos(q_1) + l_2 \cos(q_1 + q_2) \nonumber \newline
+   %
+   y &amp;= l_1 \sin(q_1) + l_2 \sin(q_1 + q_2) \nonumber \newline
+   %
+   \theta &amp;= q_1 + q_2
+\end{align}</p>
+
+<p>On taking the derivatives, 
+\begin{align}
+   \dot{x} &amp;= - l_1 \sin(q_1) \dot{q_1} - l_2 \sin(q_1 + q_2) (\dot{q_1} + \dot{q_2}) \nonumber \newline
+   %
+   \dot{y} &amp;= ~l_1 \cos(q_1) \dot{q_1} + l_2 \cos(q_1 + q_2) (\dot{q_1} + \dot{q_2}) \nonumber \newline
+   %
+   \dot{\theta} &amp;= \dot{q_1} + \dot{q_2}
+\end{align}
+Rearranging the above, we can write the same equation as
+\begin{align}
+   \begin{bmatrix}
+      \dot{x} \nonumber \newline
+      \dot{y} \nonumber \newline
+      \dot{\theta}
+   \end{bmatrix} =     \begin{bmatrix}
+                           - l_1 \sin(q_1) - l_2 \sin(q_1 + q_2) &amp; -l_2 \sin(q_1 + q_2)\nonumber \newline
+                             l_1 \cos(q_1) + l_2 \cos(q_1 + q_2) &amp; l_2 \cos(q_1 + q_2)\nonumber \newline \nonumber \newline
+                                    1 &amp; 1
+                        \end{bmatrix}
+                        \begin{bmatrix}
+                              \dot{q_1} \nonumber \newline
+                              \dot{q_2}
+                        \end{bmatrix} \newline \nonumber
+\end{align}
+<strong>Note:</strong> This is a planar manipulator and hence the dimension of end-effector velocity is <code class="language-plaintext highlighter-rouge">3 x 1</code>. <br></p>
+
+<p>From the above it can be seen that the motion of joint 1 (\(q_1\)) would induce an <code class="language-plaintext highlighter-rouge">x</code> direction velocity of \(- l_1 \sin(q_1) - l_2 \sin(q_1 + q_2)\) to the end-effector and likewise in other directions. This Jacobian matrix so obtained is called the <code class="language-plaintext highlighter-rouge">analytic jacobian</code>. For most real world cases, analytical jacobian is hard to compute and the most common approach is to compute what is called the <code class="language-plaintext highlighter-rouge">geometric jacobian</code>. This main underlying concept of computing the geometrical jacobian is the equation \(v = r \times \omega\). In the above example, the instantaneous motion of joint 1 causes the end-effector to have a velocity of \(\hat{OE} \times \dot{q}_1\). Similarly \(\dot{q}_2\) contributes \(l_2 \times \dot{q}_2\) to the end-effector velocity.</p>
+
+  </article>
+
+</div>
 
     </div>
 

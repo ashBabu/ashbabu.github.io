@@ -2,16 +2,16 @@
 <html lang="en">
 
   <!-- Head -->
-  <head><meta http-equiv="refresh" content="3; url=https://ashbabu.github.io/" />    <!-- Metadata, OpenGraph and Schema.org -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
     
 
     <!-- Standard metadata -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Ashith Shyam Babu, PhD | Page not found</title>
+    <title>Ashith Shyam Babu, PhD | Part3: Supervised Learning: Ridge regression</title>
     <meta name="author" content="Ashith Shyam Babu, PhD" />
-    <meta name="description" content="Looks like there has been a mistake. Nothing exists here." />
+    <meta name="description" content="Building blocks of supervised learning" />
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
 
 
@@ -32,7 +32,7 @@
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://ashbabu.github.io/404.html">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2020/3-supervised_learning-ridge/">
     
     <!-- Dark Mode -->
     
@@ -114,20 +114,50 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- page.html -->
-        <div class="post">
+      <!-- _layouts/post.html -->
 
-          <header class="post-header">
-            <h1 class="post-title">Page not found</h1>
-            <p class="post-description">Looks like there has been a mistake. Nothing exists here.</p>
-          </header>
+<div class="post">
 
-          <article>
-            <p>You will be redirected to the main page within 3 seconds. If not redirected, please click <a href="https://ashbabu.github.io/">here</a>.</p>
+  <header class="post-header">
+    <h1 class="post-title">Part3: Supervised Learning: Ridge regression</h1>
+    <p class="post-meta">March 21, 2020</p>
+    <p class="post-tags">
+      <a href="/blog/2020"> <i class="fas fa-calendar fa-sm"></i> 2020 </a>
+        ·  
+        <a href="/blog/category/Machine-Learning">
+          <i class="fas fa-tag fa-sm"></i> Machine-Learning</a>  
+          
 
-          </article>
+    </p>
+  </header>
 
-        </div>
+  <article class="post-content">
+    <!-- <div style="text-align: justify"> <a href="https://www.ros.org/"> ROS </a> -->
+<p><!-- </div> -->
+In this post, I will address the question <code class="language-plaintext highlighter-rouge">What happens if the feature matrix is singular?</code></p>
+
+<!-- \section{Ridge regression} -->
+<p>Singularity means the determinant of the matrix goes to zero and this would happen if any two of the columns or rows become linearly dependant. It is often said as the feature matrix loses rank and hence \(X^TX\) may not be invertible. In order to avoid this, the ridge regression adds a penalty so that the value of the weight vector does not go very large. Th loss function, <code class="language-plaintext highlighter-rouge">L</code>, becomes
+\begin{align}
+    L &amp;= (\hat{X}\hat{w} - Y)^T (\hat{X}\hat{w} - Y) + \lambda w^Tw\label{eqn:lossfunRidge}
+\end{align}
+where \(\lambda\) is called the regularization coefficient. The choice of \(\lambda\) is done manually by optimizing a test data set. \(\lambda\) also helps to prevent over-fitting (Ignore test data and over-fitting for now if you dont understand this).
+Following the same procedure as in <a href="/blog/2020/1-supervised_learning-basic/">Part1</a>, i.e., by taking the derivative and taking transpose, the weight vector (or parameters) can be obtained as
+\begin{align}
+    w &amp;= (X^TX + \lambda I)^{-1} X^TY
+\end{align}
+<strong>Notes:</strong></p>
+<ul>
+  <li>Most cases, when linear regression is done means it’s ridge regression.</li>
+  <li>A very intuitive example of over-fitting is given in Chapter 1 under the Example: Polynomial Curve Fitting in the book <code class="language-plaintext highlighter-rouge">Pattern Recognition and Machine Learning</code> <a href="https://link.springer.com/book/9780387310732" target="_blank" rel="noopener noreferrer">book</a> by Christopher Bishop</li>
+  <li>A crude approach to start would be to just set \(\lambda\) to a very small value, for instance, \(10^{-03}\) and start varying it to see the change in <code class="language-plaintext highlighter-rouge">w</code>
+</li>
+</ul>
+
+
+  </article>
+
+</div>
 
     </div>
 

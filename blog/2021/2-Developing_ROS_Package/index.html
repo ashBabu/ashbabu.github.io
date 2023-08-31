@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <!-- Head -->
+  <head>    <!-- Metadata, OpenGraph and Schema.org -->
+    
+
+    <!-- Standard metadata -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ashith Shyam Babu, PhD | Part2: Developing a ROS C++ package</title>
+    <meta name="author" content="Ashith Shyam Babu, PhD" />
+    <meta name="description" content="How to make a ROS package" />
+    <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website" />
+
+
+    <!-- Bootstrap & MDB -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-DF7Zhf293AJxJNTmh5zhoYYIMs2oXitRfBjY+9L//AY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous" />
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.1/css/academicons.min.css" integrity="sha256-i1+4qU2G2860dGGIOJscdC30s9beBXjFfzjWLjBRsBg=" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons">
+
+    <!-- Code Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/.css" media="none" id="highlight_theme_light" />
+
+    <!-- Styles -->
+    
+    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+    
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="canonical" href="https://ashbabu.github.io/blog/2021/2-Developing_ROS_Package/">
+    
+    <!-- Dark Mode -->
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/.css" media="none" id="highlight_theme_dark" />
+
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/dark_mode.js"></script>
+    
+
+  </head>
+
+  <!-- Body -->
+  <body class="fixed-top-nav ">
+
+    <!-- Header -->
+    <header>
+
+      <!-- Nav Bar -->
+      <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top">
+        <div class="container">
+          <a class="navbar-brand title font-weight-lighter" href="https://ashbabu.github.io/"><span class="font-weight-bold">Ashith</span> Shyam  Babu, PhD</a>
+          <!-- Navbar Toggle -->
+          <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar top-bar"></span>
+            <span class="icon-bar middle-bar"></span>
+            <span class="icon-bar bottom-bar"></span>
+          </button>
+
+          <div class="collapse navbar-collapse text-right" id="navbarNav">
+            <ul class="navbar-nav ml-auto flex-nowrap">
+
+              <!-- About -->
+              <li class="nav-item ">
+                <a class="nav-link" href="/">about</a>
+              </li>
+              
+
+              <!-- Other pages -->
+              <li class="nav-item dropdown ">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">blog</a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="/blog/category/robotics/">Robotics</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/programming/">Programming</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/computer-vision/">Computer Vision</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/reinforcement-learning/">Reinforcement Learning</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="/blog/category/machine-learning/">Machine Learning</a>
+                </div>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/contact/">contact</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/projects/">projects</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/publications/">publications</a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link" href="/teaching/">teaching</a>
+              </li>
+
+              <!-- Toogle theme mode -->
+              <div class="toggle-container">
+                <a id="light-toggle">
+                  <i class="fas fa-moon"></i>
+                  <i class="fas fa-sun"></i>
+                </a>
+              </div>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Content -->
+    <div class="container mt-5">
+      <!-- _layouts/post.html -->
+
+<div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Part2: Developing a ROS C++ package</h1>
+    <p class="post-meta">December 7, 2021</p>
+    <p class="post-tags">
+      <a href="/blog/2021"> <i class="fas fa-calendar fa-sm"></i> 2021 </a>
+        ·  
+        <a href="/blog/category/Robotics">
+          <i class="fas fa-tag fa-sm"></i> Robotics</a>  
+          <a href="/blog/category/Programming">
+          <i class="fas fa-tag fa-sm"></i> Programming</a>  
+          
+
+    </p>
+  </header>
+
+  <article class="post-content">
+    <h3 id="a-closer-look-at-cmakeliststxt-and-packagexml">A closer look at <em>CMakeLists.txt</em> and <em>package.xml</em>
+</h3>
+
+<p>We looked at creating a catkin package in <a href="/blog/2021/1-Developing_ROS_Package/">Part1</a>. A catkin package is characterised by a <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> and a <code class="language-plaintext highlighter-rouge">package.xml</code>. Lets take a deeper look into the important parts of these. Only the main parts of <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> is shown below and this is in no way a complete tutorial to CMake. By default, <code class="language-plaintext highlighter-rouge">catkin_create_pkg</code> generates a long <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> with lots of comments for users to read and understand. The external settings that are used to create the package are listed under the <code class="language-plaintext highlighter-rouge">find_package()</code> tag. An excellent explanation to what <code class="language-plaintext highlighter-rouge">catkin_package()</code> is provided in <a href="https://answers.ros.org/question/58498/what-is-the-purpose-of-catkin_depends/" target="_blank" rel="noopener noreferrer">here</a>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake_minimum_required(VERSION 3.0.2)
+project(my_test_pkg)
+
+add_compile_options(-std=c++11)
+
+find_package(catkin REQUIRED COMPONENTS
+  moveit_core
+  roscpp
+  std_msgs
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+#  LIBRARIES my_test_pkg
+  CATKIN_DEPENDS moveit_core roscpp std_msgs
+#  DEPENDS system_lib
+)
+
+###########
+## Build ##
+###########
+
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+## Declare a C++ executable
+add_executable(${PROJECT_NAME} src/my_test_pkg.cpp)
+
+## Add cmake target dependencies of the executable
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+ )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+if(CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+
+    add_rostest_gtest(
+        test_one
+        test/test_one.test
+        test/test_one.cpp
+    )
+    target_link_libraries(
+        test_one
+        ${catkin_LIBRARIES}
+    )
+    add_dependencies(
+        test_one
+        ${catkin_EXPORTED_TARGETS}
+    )
+
+    catkin_add_gtest(
+        test_two
+        test/test_two.cpp
+        src/hello.cpp
+        src/add.cpp
+    )
+    target_link_libraries(
+        test_two
+        ${catkin_LIBRARIES}
+    )
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">include_directories()</code> contain the header files of the packages that you use in your project. If the project uses <a href="https://opencv.org/" target="_blank" rel="noopener noreferrer">OpenCV</a> as well, then this has to be added as</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+  ) 
+</code></pre></div></div>
+<p>Lets say we want to create two header files like <code class="language-plaintext highlighter-rouge">hello.h</code> and <code class="language-plaintext highlighter-rouge">add.h</code>, it would be a good practice to organize it as follows.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>my_test_pkg
+        |_ CMakeLists.txt
+        |_ package.xml
+        |_ src/
+        |_ include/
+              |_ my_test_pkg/
+                    |_ greet/
+                        |_ hello.h
+                    |_ math/
+                        |_ add.h
+</code></pre></div></div>
+<p>The header <code class="language-plaintext highlighter-rouge">hello.h</code> would be something like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#ifndef _HELLO_H_
+#define _HELLO_H_
+
+#include&lt;iostream&gt;
+#include&lt;string&gt;
+
+namespace greeting
+{
+class Hello
+{
+    public:
+        Hello(); // constructor
+        ~Hello();  // destructor
+        void printHello(const std::string &amp; str):
+    protected:
+        // protected attributes
+
+    private:
+        // private attributes
+};
+}
+#endif _HELLO_H_
+</code></pre></div></div>
+
+<p>Then similarly in the <code class="language-plaintext highlighter-rouge">src</code>, create two folders <code class="language-plaintext highlighter-rouge">greet</code> and <code class="language-plaintext highlighter-rouge">math</code> with the corresponding implementations (for example <code class="language-plaintext highlighter-rouge">hello.cpp</code> and <code class="language-plaintext highlighter-rouge">add.cpp</code>). The headers can then be used as <code class="language-plaintext highlighter-rouge">#include &lt;my_test_pkg/greet/hello.h&gt;</code> and <code class="language-plaintext highlighter-rouge">#include &lt;my_test_pkg/math/add.h&gt;</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">hello.cpp</code> would be like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;my_test_pkg/greet/hello.h&gt;
+
+using namespace greeting;
+
+Hello::Hello()
+{
+    std::cout&lt;&lt;"Hello Constructor Invoked"&lt;&lt; std::endl;
+}
+Hello::~Hello()
+{
+    std::cout&lt;&lt;"Hello Destructor Invoked"&lt;&lt; std::endl;
+}
+void Hello::printHello(const std::string &amp; str)
+{
+    std::cout&lt;&lt;" The string to print is " &lt;&lt; str &lt;&lt; std::endl;
+}
+</code></pre></div></div>
+<p>As you know that a C++ program allows only one <code class="language-plaintext highlighter-rouge">main()</code> function, we could take a look at how this is organised in the <code class="language-plaintext highlighter-rouge">src</code> directory.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>my_test_pkg
+        |_ CMakeLists.txt
+        |_ package.xml
+        |_ include/
+        |_ src/
+            |_ greet/
+                |_ hello.cpp
+            |_ math/
+                |_ add.cpp
+            |_ main.cpp
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">main.cpp</code> will look something like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;my_test_pkg/greet/hello.h&gt;
+#include&lt;my_test_pkg/math/add.h&gt;
+#include &lt;ros/ros.h&gt;
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "my_test_node");  // initiating a ros node
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
+
+    ros::Rate loop_rate(5);
+    int N[100] = {1, 2, 3 ....};
+    std::string myName = "JonDoe";
+
+    while (ros::ok())
+    {
+        // call your functions: as an example
+        printHello(myName);
+        addNumbers(N)
+        loop_rate.sleep();
+    }
+
+    spinner.stop();
+    return 0;
+//    // Wait for ROS threads to terminate
+//    ros::waitForShutdown();
+}
+</code></pre></div></div>
+<p>A little bit of ROS specific stuffs are involved but it should be quite straight forward.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">add_executable()</code> is where the whole executables are listed. In this particular case, it would be</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>`add_executable( 
+    src/hello.cpp
+    src/add.cpp
+    src/main.cpp
+    )`
+</code></pre></div></div>
+<p>As the name goes, the  <code class="language-plaintext highlighter-rouge">add_dependencies()</code> help in adding the dependencies which is an essential part of your package. And finally the libraries are to be linked to your executable which is done using the</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>target_link_libraries(
+    ${PROJECT_NAME}
+    ${OpenCV_LIBS}
+    ${catkin_LIBRARIES}
+)
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">package.xml</code> should have the <code class="language-plaintext highlighter-rouge">build_depend</code> and <code class="language-plaintext highlighter-rouge">exec_depend</code> tags for all those listed under the <code class="language-plaintext highlighter-rouge">find_package()</code>. For a deeper understanding, have a look at <a href="http://wiki.ros.org/catkin/package.xml" target="_blank" rel="noopener noreferrer">here</a>.</p>
+
+<p>In no way, this article is a complete with respect to learning ROS CPP but I hope this would give a good enough start point. We will look at adding <code class="language-plaintext highlighter-rouge">gtest()</code> and <code class="language-plaintext highlighter-rouge">rostest()</code> in the next <a href="/blog/2022/3-Developing_ROS_Package/">article</a>.</p>
+
+
+  </article>
+
+</div>
+
+    </div>
+
+    <!-- Footer -->    
+    <footer class="fixed-bottom">
+      <div class="container mt-0">
+        © Copyright 2023 Ashith Shyam Babu, PhD. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="noopener noreferrer">Jekyll</a>. Hosted by <a href="https://pages.github.com/" target="_blank" rel="noopener noreferrer">GitHub Pages</a>.
+
+      </div>
+    </footer>
+
+    <!-- JavaScripts -->
+    <!-- jQuery -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <!-- Bootsrap & MDB scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.2/dist/umd/popper.min.js" integrity="sha256-l/1pMF/+J4TThfgARS6KwWrk/egwuVvhRzfLAMQ6Ds4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.min.js" integrity="sha256-SyTu6CwrfOhaznYZPoolVw2rxoY7lKYKQvqbtqN93HI=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script>
+
+    <!-- Masonry & imagesLoaded -->
+  <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@4/imagesloaded.pkgd.min.js"></script>
+  <script defer src="/assets/js/masonry.js" type="text/javascript"></script>
+    
+  <!-- Medium Zoom JS -->
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
+  <script src="/assets/js/zoom.js"></script><!-- Load Common JS -->
+  <script src="/assets/js/common.js"></script>
+
+    <!-- MathJax -->
+  <script type="text/javascript">
+    window.MathJax = {
+      tex: {
+        tags: 'ams'
+      }
+    };
+  </script>
+  <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    
+  </body>
+</html>
+
