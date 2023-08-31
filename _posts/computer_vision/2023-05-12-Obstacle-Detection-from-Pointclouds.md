@@ -154,7 +154,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('realsense2_camera'), 'launch/rs_launch.py')),
         launch_arguments={
             "depth_module.profile": "640x480x30",
-            "pointcloud.enable": "True",
+           # "pointcloud.enable": "True",
         }.items()
     )
 
@@ -218,7 +218,8 @@ def generate_launch_description():
 ```
 * Use the cropbox filter as above.
 
-
+**Notes**
+* Launching realsense camera with the launch_arguments `"pointcloud.enable": "True"` on raspberry pi will not publish pointclouds. This argument infact slows down the publishing rate of depth images from the specified rate of 30 to around 8 Hz. However if the `pointcloud.enable` argument is removed, then the rate of publishing of depth images is at the specified 30 Hz itself and by using either the `plugin='rtabmap_util::PointCloudXYZ'` or [depth_image_proc](http://wiki.ros.org/depth_image_proc)
 <br />
 {% include youtubePlayer.html id=page.youtubeId %}
 
