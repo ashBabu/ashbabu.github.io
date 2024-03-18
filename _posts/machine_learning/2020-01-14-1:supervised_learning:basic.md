@@ -17,7 +17,7 @@ So, imagine if house pricing was as easy as a house costs 50k + 100k per bedroom
 `house prices, (y):` 150k, 250k, 350k \\
 `Number of bedrooms, (nB):` 1, 2, 3  
 A plot of the house price vs number of bedrooms is shown here for a better understanding. From this, it is clear that the cost of a 4 bedroom house would be 450k and so on.
-{% include figure.html path="assets/img/machine-learning/housePrice_vs_nBedrooms.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+{% include figure.liquid path="assets/img/machine-learning/housePrice_vs_nBedrooms.png" class="img-fluid rounded z-depth-1" zoomable=true %}
 
 <br>
 
@@ -32,7 +32,7 @@ where `w's` are weights that need to be found out and `nB`'s (or `x`) are the nu
 	y = bias~ (intercept) + slope * n_B \nonumber
 \end{equation}
 
-{% include figure.html path="assets/img/machine-learning/slope_intercept.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+{% include figure.liquid path="assets/img/machine-learning/slope_intercept.png" class="img-fluid rounded z-depth-1" zoomable=true %}
 
 
 where `w_0` is the bias or intercept and `w_1` is called the slope. In matrix form, this can be written as

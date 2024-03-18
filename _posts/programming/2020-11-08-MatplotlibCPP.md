@@ -18,7 +18,7 @@ categories: Programming
     }
     {% endhighlight %}
 
-{% include figure.html path="assets/img/programming/matplotlib-cpp.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+{% include figure.liquid path="assets/img/programming/matplotlib-cpp.png" class="img-fluid rounded z-depth-1" zoomable=true %}
 <br/>
 The command line code to build the program is as follows
 
