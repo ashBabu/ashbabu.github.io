@@ -6,4 +6,4 @@ description:
 nav: true
 ---
 
-email: shyamashi@gmail.com ; ashith@theiarobotics.com
+email: 2ash.babu@gmail.com ; ash.babu@headlight.ai
