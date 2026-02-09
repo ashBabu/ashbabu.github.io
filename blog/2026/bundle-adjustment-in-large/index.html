@@ -1,0 +1,259 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Revisiting Bundle Adjustment with Ceres | Ashith Shyam Babu, PhD </title> <meta name="author" content="Ashith Shyam Babu, PhD"> <meta name="description" content="A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. "> <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website"> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <link rel="stylesheet" href="/assets/css/bootstrap.min.css?v=a4b3f509e79c54a512b890d73235ef04"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="/assets/css/academicons.min.css?v=f0b7046b84e425c55f3463ac249818f5"> <link defer rel="stylesheet" href="/assets/css/scholar-icons.css?v=62b2ac103a88034e6882a5be5f3e2772"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="data:image/svg+xml,&lt;svg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%20100%22&gt;&lt;text%20y=%22.9em%22%20font-size=%2290%22&gt;%E2%9A%9B%EF%B8%8F&lt;/text&gt;&lt;/svg&gt;"> <link rel="stylesheet" href="/assets/css/main.css?v=d41d8cd98f00b204e9800998ecf8427e"> <link rel="canonical" href="https://ashbabu.github.io/blog/2026/bundle-adjustment-in-large/"> <script src="/assets/js/theme.js?v=5fea5159b787642c1bbc1f334d60f883"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> <span class="font-weight-bold">Ashith</span> Shyam Babu, PhD </a> <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse text-right" id="navbarNav"> <ul class="navbar-nav ml-auto flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">about </a> </li> <li class="nav-item dropdown "> <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">blog </a> <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown"> <a class="dropdown-item " href="/blog/category/robotics/">Robotics</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="/blog/category/programming/">Programming</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="/blog/category/computer-vision/">Computer Vision</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="/blog/category/reinforcement-learning/">Reinforcement Learning</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="/blog/category/machine-learning/">Machine Learning</a> </div> </li> <li class="nav-item "> <a class="nav-link" href="/contact/">contact </a> </li> <li class="nav-item "> <a class="nav-link" href="/publications/">publications </a> </li> <li class="nav-item "> <a class="nav-link" href="/projects/">projects </a> </li> <li class="nav-item "> <a class="nav-link" href="/teaching/">teaching </a> </li> <li class="toggle-container"> <button id="light-toggle" title="Change theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="post"> <header class="post-header"> <h1 class="post-title">Revisiting Bundle Adjustment with Ceres</h1> <p class="post-meta"> Created on February 08, 2026 </p> <p class="post-tags"> <a href="/blog/2026"> <i class="fa-solid fa-calendar fa-sm"></i> 2026 </a>   ·   <a href="/blog/category/computer-vision"> <i class="fa-solid fa-tag fa-sm"></i> Computer-Vision</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <h3 id="camera-projection-model">Camera Projection Model</h3> <p>The projection from 3D to 2D can be represented as \begin{align} s \begin{bmatrix} u \nonumber \newline v \nonumber \newline 1 \end{bmatrix} = [K ~R~ t]_{3\times4} \begin{bmatrix} X \nonumber \newline Y \nonumber \newline Z \tag{1} 1 \end{bmatrix} \end{align} where $s$ is the scale factor, $(u, v)$ are the projected pixel coordinates, $K, R, t$ are the camera intrinsics, Rotation (3 x 3) and translation (3 x 1)(extrinsics) and $(X, Y, Z)$ are the 3D co-ordinates of the world point or landmark.</p> <p>The matrix K for a pinhole camera is</p> <p>\begin{align} \begin{bmatrix} f_x &amp; 0 &amp; c_x \nonumber \newline 0 &amp; f_y &amp; c_y \nonumber \newline 0 &amp; 0 &amp; 1 \end{bmatrix} \label{eq:intrinsic} \end{align}</p> <p>The $[K~R~t]$ together is called the Projection matrix, $P_{3\times4}$. Other projection models include having distortion coefficients,</p> <p>\begin{align} P &amp;= R * X + t ~~~~ \textnormal{(conversion from world to camera coordinates)} \nonumber \newline p &amp;= -\frac{P}{P.z} ~~~~ \textnormal{(perspective division, -ve bcoz image plane is behind camera)} \nonumber \newline p’ &amp;= f * r(p) * p ~~~~ \textnormal{(conversion to pixel coordinates)} \nonumber \newline r(p) &amp;= 1.0 + k1 * ||p||^2 + k2 * ||p||^4. \nonumber \end{align} where $P.z$ is the third (z) coordinate of $P$. In the last equation, $r(p)$ is a function that computes a scaling factor to undo the radial distortion:</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/img/computer-vision/cam_wd_pts-480.webp 480w,/assets/img/computer-vision/cam_wd_pts-800.webp 800w,/assets/img/computer-vision/cam_wd_pts-1400.webp 1400w," type="image/webp" sizes="95vw"></source> <img src="/assets/img/computer-vision/cam_wd_pts.jpeg" class="img-fluid rounded z-depth-1" width="100%" height="auto" data-zoomable="" loading="lazy" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"> </picture> <figcaption class="caption">Fig.1. Bundle Adjustment Schematic.</figcaption> </figure> <p>Given the true observation (camera pixels) values (LHS of <a href="#1">Eq. 1</a>. Using RHS of the <a href="#1">Eq. 1</a>, we get the predicted value for the pixel coordinates. The error is therefore calculated as</p> <p>\begin{align} e = \begin{bmatrix} u_{predicted} - u_{observed} \nonumber \newline v_{predicted} - v_{observed} \end{bmatrix} \end{align}</p> <p>In <a href="#ba-schematic">Fig 1</a>, camera 1 sees the points P1, P2, P3 and P4, camera 2 sees the points P3, P4, P5 and so on and so forth. So the error will have the components $e_{11}, e_{12}, e_{13}, e_{14}, e_{23}, e_{24}, e_{25}$ etc. Here, $e_{ij}$ has $i$ as the camera index and $j$ as the landmark index. The cost function for an optimization problem can be formulated as</p> <p>\begin{align} \frac{1}{2} \Sigma || e_{ij} || ^2 \end{align}</p> <p>To solve such a non-linear optimization problem, Ceres <a class="citation" href="#ceres-solver">(Agarwal et al., n.d.)</a> is used. The dataset has been obtained from <a href="https://grail.cs.washington.edu/projects/bal/" rel="external nofollow noopener" target="_blank"> Grail lab, University of Washington </a></p> <h3 id="triangulation">Triangulation</h3> <p>Let the rows of $P$ be $p_1$, $p_2$ and $p_3$ and $\boldsymbol{X}=(X, Y, Z, 1)^T$. Therefore, \begin{align} su &amp;= p_1X \nonumber \newline sv &amp;= p_2X \nonumber \newline s &amp;= p_3X \end{align} Eliminating $s$, we get \begin{align} (up_3 - p_1)\boldsymbol{X} &amp;= 0 \nonumber \newline (vp_3 - p_2)\boldsymbol{X} &amp;= 0 \end{align} This means that for each observed point we get a pair of equations. If there are multiple observations for the same point from different camera poses, we can stack these together to form an eigenvalue problem of the form \begin{align} A \boldsymbol{X } = 0 \end{align}</p> <p>The matrix $A$ can be solved using singular value decomposition (SVD)</p> <p>A very good book to refresh the concepts can be found <a class="citation" href="#slambook2017">(Gao et al., n.d.)</a></p> <h3 id="code">Code</h3> <p>A <code class="language-plaintext highlighter-rouge">utilities.hpp</code> is created as follows</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#pragma once</span>
+
+<span class="c">#include &lt;ceres/ceres.h&gt;</span>
+<span class="c">#include &lt;ceres/rotation.h&gt;</span>
+
+<span class="c">#include &lt;Eigen/Dense&gt;</span>
+<span class="c">#include &lt;fstream&gt;</span>
+
+namespace bundle_adjustment <span class="o">{</span>
+struct CameraParams <span class="o">{</span>
+  /<span class="k">*</span>
+  params layout:
+  <span class="o">[</span>0] rx <span class="o">(</span>angle-axis<span class="o">)</span>
+  <span class="o">[</span>1] ry <span class="o">(</span>angle-axis<span class="o">)</span>
+  <span class="o">[</span>2] rz <span class="o">(</span>angle-axis<span class="o">)</span>
+  <span class="o">[</span>3] tx <span class="o">(</span>translation<span class="o">)</span>
+  <span class="o">[</span>4] ty <span class="o">(</span>translation<span class="o">)</span>
+  <span class="o">[</span>5] tz <span class="o">(</span>translation<span class="o">)</span>
+  <span class="o">[</span>6] focal_length   
+  <span class="o">[</span>7] k1 <span class="o">(</span>radial distortion<span class="o">)</span>
+  <span class="o">[</span>8] k2 <span class="o">(</span>radial distortion<span class="o">)</span>
+
+  <span class="k">*</span>/
+  double params[9]<span class="p">;</span>
+<span class="o">}</span><span class="p">;</span>
+
+struct WorldPoint <span class="o">{</span>
+  double xyz[3]<span class="p">;</span>
+<span class="o">}</span><span class="p">;</span>
+
+struct Observation <span class="o">{</span>
+  int camera_index<span class="p">;</span>
+  int point_index<span class="p">;</span>
+  double u<span class="p">;</span>
+  double v<span class="p">;</span>
+<span class="o">}</span><span class="p">;</span>
+
+/<span class="k">*</span>
+Triangulation using Direct Linear Transformation
+<span class="k">*</span>/
+WorldPoint TriangulateDLT<span class="o">(</span>const std::vector&lt;Observations&gt;&amp; obs<span class="o">)</span> <span class="o">{</span>
+  Eigen::MatrixXd A<span class="o">(</span>2 <span class="k">*</span> obs.size<span class="o">()</span>, 4<span class="o">)</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="o">(</span>size_t i <span class="o">=</span> 0<span class="p">;</span> i &lt; obs.size<span class="o">()</span><span class="p">;</span> ++i<span class="o">)</span> <span class="o">{</span>
+    const auto P <span class="o">=</span> obs[i].P<span class="p">;</span>
+    double u <span class="o">=</span> obs[i].u<span class="p">;</span>
+    double v <span class="o">=</span> obs[i].v<span class="p">;</span>
+
+    // Row 1: u <span class="k">*</span> P3 - P1
+    A.row<span class="o">(</span>2 <span class="k">*</span> i<span class="o">)</span> <span class="o">=</span> u <span class="k">*</span> P.row<span class="o">(</span>2<span class="o">)</span> - P.row<span class="o">(</span>0<span class="o">)</span><span class="p">;</span>
+    // Row 2: v <span class="k">*</span> P3 - P2
+    A.row<span class="o">(</span>2 <span class="k">*</span> i + 1<span class="o">)</span> <span class="o">=</span> v <span class="k">*</span> P.row<span class="o">(</span>2<span class="o">)</span> - P.row<span class="o">(</span>1<span class="o">)</span><span class="p">;</span>
+  <span class="o">}</span>
+
+  // Solve A<span class="k">*</span>X <span class="o">=</span> 0 using SVD
+  // The solution is the eigenvector corresponding to the smallest eigenvalue
+  Eigen::JacobiSVD&lt;Eigen::MatrixXd&gt; svd<span class="o">(</span>A, Eigen::ComputeFullV<span class="o">)</span><span class="p">;</span>
+  Eigen::Vector4d X_homo <span class="o">=</span> svd.matrixV<span class="o">()</span>.col<span class="o">(</span>3<span class="o">)</span><span class="p">;</span>
+
+  // Convert from homogeneous to Euclidean
+  WorldPoint world_pts<span class="p">;</span>
+  Eigen::Vector3d wp<span class="o">(</span>X_homo.head&lt;3&gt;<span class="o">()</span> / X_homo<span class="o">(</span>3<span class="o">))</span><span class="p">;</span>
+  world_pts.xyz[0] <span class="o">=</span> wp<span class="o">(</span>0<span class="o">)</span><span class="p">;</span>
+  world_pts.xyz[1] <span class="o">=</span> wp<span class="o">(</span>1<span class="o">)</span><span class="p">;</span>
+  world_pts.xyz[2] <span class="o">=</span> wp<span class="o">(</span>2<span class="o">)</span><span class="p">;</span>
+
+  <span class="k">return </span>world_pts<span class="p">;</span>
+<span class="o">}</span>
+
+struct BALProblem <span class="o">{</span>
+  int num_cameras<span class="p">;</span>
+  int num_points<span class="p">;</span>
+  int num_observations<span class="p">;</span>
+
+  std::vector&lt;Observation&gt; observations<span class="p">;</span>
+  std::vector&lt;CameraParams&gt; cameras<span class="p">;</span>
+  std::vector&lt;WorldPoint&gt; points<span class="p">;</span>
+
+  bool LoadFile<span class="o">(</span>const std::string&amp; filename<span class="o">)</span> <span class="o">{</span>
+    std::ifstream file<span class="o">(</span>filename<span class="o">)</span><span class="p">;</span>
+    <span class="k">if</span> <span class="o">(!</span>file.is_open<span class="o">())</span> <span class="k">return </span><span class="nb">false</span><span class="p">;</span>
+
+    // 1. Read the header
+    file <span class="o">&gt;&gt;</span> num_cameras <span class="o">&gt;&gt;</span> num_points <span class="o">&gt;&gt;</span> num_observations<span class="p">;</span>
+
+    // 2. Read the observations
+    observations.resize<span class="o">(</span>num_observations<span class="o">)</span><span class="p">;</span>
+    <span class="k">for</span> <span class="o">(</span>int i <span class="o">=</span> 0<span class="p">;</span> i &lt; num_observations<span class="p">;</span> ++i<span class="o">)</span> <span class="o">{</span>
+      file <span class="o">&gt;&gt;</span> observations[i].camera_index <span class="o">&gt;&gt;</span> observations[i].point_index <span class="o">&gt;&gt;</span>
+          observations[i].u <span class="o">&gt;&gt;</span> observations[i].v<span class="p">;</span>
+    <span class="o">}</span>
+
+    // 3. Read the camera parameters <span class="o">(</span>9 per camera<span class="o">)</span>
+    cameras.resize<span class="o">(</span>num_cameras<span class="o">)</span><span class="p">;</span>
+    <span class="k">for</span> <span class="o">(</span>int i <span class="o">=</span> 0<span class="p">;</span> i &lt; num_cameras<span class="p">;</span> ++i<span class="o">)</span> <span class="o">{</span>
+      <span class="k">for</span> <span class="o">(</span>int j <span class="o">=</span> 0<span class="p">;</span> j &lt; 9<span class="p">;</span> ++j<span class="o">)</span> <span class="o">{</span>
+        file <span class="o">&gt;&gt;</span> cameras[i].params[j]<span class="p">;</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    // 4. Read the point parameters <span class="o">(</span>3 per point<span class="o">)</span>
+    points.resize<span class="o">(</span>num_points<span class="o">)</span><span class="p">;</span>
+    <span class="k">for</span> <span class="o">(</span>int i <span class="o">=</span> 0<span class="p">;</span> i &lt; num_points<span class="p">;</span> ++i<span class="o">)</span> <span class="o">{</span>
+      <span class="k">for</span> <span class="o">(</span>int j <span class="o">=</span> 0<span class="p">;</span> j &lt; 3<span class="p">;</span> ++j<span class="o">)</span> <span class="o">{</span>
+        file <span class="o">&gt;&gt;</span> points[i].xyz[j]<span class="p">;</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">return </span><span class="nb">true</span><span class="p">;</span>
+  <span class="o">}</span>
+
+  void WriteToPLY<span class="o">(</span>const std::string&amp; filename<span class="o">)</span> <span class="o">{</span>
+    std::ofstream ofs<span class="o">(</span>filename<span class="o">)</span><span class="p">;</span>
+    ofs &lt;&lt; <span class="s2">"ply</span><span class="se">\n</span><span class="s2">format ascii 1.0</span><span class="se">\n</span><span class="s2">"</span>
+        &lt;&lt; <span class="s2">"element vertex "</span> <span class="o">&lt;&lt;</span> <span class="no">num_points</span><span class="sh"> &lt;&lt; "</span><span class="se">\n</span><span class="sh">"
+        &lt;&lt; "property float x</span><span class="se">\n</span><span class="sh">property float y</span><span class="se">\n</span><span class="sh">property float z</span><span class="se">\n</span><span class="sh">"
+        &lt;&lt; "end_header</span><span class="se">\n</span><span class="sh">";
+
+    for (const auto&amp; p : points) {
+        ofs &lt;&lt; p.xyz[0] &lt;&lt; " " &lt;&lt; p.xyz[1] &lt;&lt; " " &lt;&lt; p.xyz[2] &lt;&lt; "</span><span class="se">\n</span><span class="sh">";
+    }
+}
+};
+
+struct ReprojectionError {
+  ReprojectionError(double observed_x, double observed_y)
+      : observed_x_(observed_x), observed_y_(observed_y) {}
+
+  template &lt;typename T&gt;
+  bool operator()(const T* const camera, const T* const point,
+                  T* residuals) const {
+    const T* angle_axis = camera + 0;
+    const T* translation = camera + 3;
+    const T&amp; focal = camera[6];
+    const T&amp; k1 = camera[7];
+    const T&amp; k2 = camera[8];
+
+    T p[3];
+    ceres::AngleAxisRotatePoint(angle_axis, point, p);
+
+    // Translate the point
+    p[0] += translation[0];
+    p[1] += translation[1];
+    p[2] += translation[2];
+
+    // Project to image plane
+    T xp = -p[0] / p[2];  // negative because cam img plane is behind
+    T yp = -p[1] / p[2];
+
+    T r2 = xp * xp + yp * yp;
+    T rp = T(1.0) + k1* r2 + k2* r2* r2;
+
+    // Apply intrinsics
+    T predicted_x = focal * rp * xp;
+    T predicted_y = focal * rp * yp;
+
+    // 5. Compute residuals
+    residuals[0] = predicted_x - T(observed_x_);
+    residuals[1] = predicted_y - T(observed_y_);
+
+    return true;
+  }
+
+  // Factory to hide the construction of the CostFunction object
+  static ceres::CostFunction* Create(double observed_x, double observed_y) {
+    return new ceres::AutoDiffCostFunction&lt;ReprojectionError, 2, 9,
+                                           3&gt;(  // 2 residuals, 9 camera params,
+                                                // 3 point params
+        new ReprojectionError(observed_x, observed_y));
+  }
+
+  double observed_x_;
+  double observed_y_;
+};
+
+}  // namespace bundle_adjustment
+</span></code></pre></div></div> <p>The <code class="language-plaintext highlighter-rouge">main.cpp</code> is as follows</p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#include &lt;fstream&gt;</span>
+<span class="c">#include &lt;iostream&gt;</span>
+<span class="c">#include &lt;string&gt;</span>
+<span class="c">#include &lt;vector&gt;</span>
+
+<span class="c">#include "utilities.hpp"</span>
+
+namespace ba <span class="o">=</span> bundle_adjustment<span class="p">;</span>
+
+int main<span class="o">(</span>int argc, char<span class="k">**</span> argv<span class="o">)</span> <span class="o">{</span>
+  ba::BALProblem data<span class="p">;</span>
+  // <span class="k">if</span> <span class="o">(</span>data.LoadFile<span class="o">(</span><span class="s2">"problem-16-22106-pre.txt"</span><span class="o">))</span> <span class="o">{</span>
+  <span class="k">if</span> <span class="o">(</span>data.LoadFile<span class="o">(</span><span class="s2">"problem-135-90642-pre_dubrovnik.txt"</span><span class="o">))</span> <span class="o">{</span>
+    std::cout &lt;&lt; <span class="s2">"Loaded "</span> <span class="o">&lt;&lt;</span> <span class="no">data</span><span class="sh">.num_cameras &lt;&lt; " cameras and "
+              &lt;&lt; data.num_points &lt;&lt; " points." &lt;&lt; std::endl;
+  }
+
+  ceres::Problem problem;
+  for (const auto&amp; obs : data.observations) {
+    double* cam_params = data.cameras[obs.camera_index].params;
+    double* landmarks = data.points[obs.point_index].xyz;
+    double u = obs.u;
+    double v = obs.v;
+
+    // Create Cost Function
+    ceres::CostFunction* cost_function = ba::ReprojectionError::Create(u, v);
+
+    // Add Residual Block
+    problem.AddResidualBlock(
+        cost_function,
+        new ceres::HuberLoss(1.0),  // Robust loss against outliers
+        cam_params, landmarks);
+  }
+  problem.SetParameterBlockConstant(data.cameras[0].params);
+
+  ceres::Solver::Options options;
+  options.linear_solver_type = ceres::SPARSE_SCHUR;
+  options.minimizer_progress_to_stdout = true;
+  options.num_threads = 16; // Use multiple cores
+  options.preconditioner_type = ceres::SCHUR_JACOBI; 
+  options.max_num_iterations = 200;
+
+  ceres::Solver::Summary summary;
+  std::cout &lt;&lt; "Solving..." &lt;&lt; std::endl;
+  
+  data.WriteToPLY("initial_dubrovnik.ply");
+  
+  ceres::Solve(options, &amp;problem, &amp;summary);
+
+  data.WriteToPLY("optimized_dubrovnik.ply");
+
+  std::cout &lt;&lt; summary.FullReport() &lt;&lt; "</span><span class="se">\n</span><span class="sh">";
+  return 0;
+}
+</span></code></pre></div></div> <p>The <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code></p> <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake_minimum_required<span class="o">(</span>VERSION 3.5<span class="o">)</span>
+project<span class="o">(</span>ba_uni_washington<span class="o">)</span>
+
+<span class="nb">set</span><span class="o">(</span>CMAKE_CXX_STANDARD 17<span class="o">)</span>
+<span class="nb">set</span><span class="o">(</span>CMAKE_CXX_STANDARD_REQUIRED ON<span class="o">)</span>
+
+find_package<span class="o">(</span>Ceres REQUIRED<span class="o">)</span>
+find_package<span class="o">(</span>Eigen3<span class="o">)</span>
+
+include_directories<span class="o">(</span>
+    include
+    <span class="k">${</span><span class="nv">EIGEN3_INCLUDE_DIRS</span><span class="k">}</span>
+<span class="o">)</span>
+
+add_executable<span class="o">(</span>bundle_adjustment 
+    bundle_adjustment.cpp 
+<span class="o">)</span>
+target_link_libraries<span class="o">(</span>bundle_adjustment 
+    PRIVATE ceres
+    <span class="k">${</span><span class="nv">EIGEN3_LIBRARIES</span><span class="k">}</span>
+<span class="o">)</span>
+<span class="nb">install</span><span class="o">(</span>TARGETS bundle_adjustment 
+    DESTINATION lib/<span class="k">${</span><span class="nv">PROJECT_NAME</span><span class="k">}</span>
+<span class="o">)</span>
+</code></pre></div></div> <h3 id="results">Results</h3> <p><img style="float: left;" title="Camera calibration" src="/assets/img/computer-vision/bundle_adjustment/bundle_adjustment.png" alt="bundle_adjustment" width="900" height="400"></p> <div style="clear: both; margin-bottom: 50px;"></div> <h3 id="references">References</h3> <div class="publications"> <h2 class="bibliography"></h2> <ol class="bibliography"> <li> <div class="row"> <div class="col col-sm-2 abbr"> </div> <div id="ceres-solver" class="col-sm-8"> <div class="title">Ceres Solver</div> <div class="author"> Sameer Agarwal, Keir Mierle, and Others </div> <div class="periodical"> </div> <div class="periodical"> </div> <div class="links"> </div> </div> </div> </li> <li> <div class="row"> <div class="col col-sm-2 abbr"> </div> <div id="slambook2017" class="col-sm-8"> <div class="title">14 Lectures on Visual SLAM: From Theory to Practice</div> <div class="author"> Xiang Gao, Tao Zhang, Yi Liu, and <span class="more-authors" title="click to view 1 more author" onclick=" var element=$(this); element.attr('title', ''); var more_authors_text=element.text() == '1 more author' ? 'Qinrui Yan' : '1 more author'; var cursorPosition=0; var textAdder=setInterval(function(){ element.html(more_authors_text.substring(0, cursorPosition + 1)); if (++cursorPosition == more_authors_text.length){ clearInterval(textAdder); } }, '10'); ">1 more author</span> </div> <div class="periodical"> </div> <div class="periodical"> </div> <div class="links"> </div> </div> </div> </li> </ol> </div> </div> </article> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2026 Ashith Shyam Babu, PhD. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank" rel="external nofollow noopener">Unsplash</a>. </div> </footer> <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script> <script src="/assets/js/bootstrap.bundle.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js?v=a0db7e5d5c70cc3252b3138b0c91dcaf" type="text/javascript"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/js/zoom.js?v=85ddb88934d28b74e78031fd54cf8308"></script> <script src="/assets/js/no_defer.js?v=2781658a0a2b13ed609542042a859126"></script> <script defer src="/assets/js/common.js?v=c15de51d4bb57887caa2c21988d97279"></script> <script defer src="/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?v=d9f17b6adc2311cbabd747f4538bb15f"></script> <script async src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script> <script async src="https://badge.dimensions.ai/badge.js"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/assets/js/mathjax-setup.js?v=a5bb4e6a542c546dd929b24b8b236dfd"></script> <script defer src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6" crossorigin="anonymous"></script> <script defer src="/assets/js/progress-bar.js?v=2f30e0e6801ea8f5036fa66e1ab0a71a" type="text/javascript"></script> <script src="/assets/js/vanilla-back-to-top.min.js?v=f40d453793ff4f64e238e420181a1d17"></script> <script>
+    addBackToTop();
+  </script> </body> </html>
